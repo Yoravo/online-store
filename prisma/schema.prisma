@@ -1,0 +1,351 @@
+// ============================================================
+// schema.prisma — Marketplace Online Store
+// Stack: Next.js + Supabase (PostgreSQL) + Prisma v7
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated.prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  WAITING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum ShipmentStatus {
+  PENDING
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+enum VoucherType {
+  PERCENTAGE
+  FIXED
+}
+
+// ============================================================
+// USER & AUTH
+// ============================================================
+
+model User {
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  role       Role     @default(BUYER)
+  avatar     String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  store         Store?
+  addresses     Address[]
+  cart          Cart?
+  orders        Order[]
+  reviews       Review[]
+  wishlists     Wishlist[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+// ============================================================
+// STORE
+// ============================================================
+
+model Store {
+  id          String   @id @default(uuid())
+  user_id     String   @unique
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user     User      @relation(fields: [user_id], references: [id])
+  products Product[]
+  orders   Order[]
+  vouchers Voucher[]
+
+  @@map("stores")
+}
+
+// ============================================================
+// CATEGORY
+// ============================================================
+
+model Category {
+  id        String  @id @default(uuid())
+  parent_id String?
+  name      String
+  slug      String  @unique
+
+  parent   Category?  @relation("CategoryTree", fields: [parent_id], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@map("categories")
+}
+
+// ============================================================
+// PRODUCT
+// ============================================================
+
+model Product {
+  id          String   @id @default(uuid())
+  store_id    String
+  category_id String
+  name        String
+  slug        String   @unique
+  description String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  store     Store            @relation(fields: [store_id], references: [id])
+  category  Category         @relation(fields: [category_id], references: [id])
+  variants  ProductVariant[]
+  images    ProductImage[]
+  reviews   Review[]
+  wishlists Wishlist[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id         String   @id @default(uuid())
+  product_id String
+  name       String
+  price      Decimal  @db.Decimal(12, 2)
+  stock      Int      @default(0)
+  sku        String?  @unique
+  updated_at DateTime @updatedAt
+
+  product     Product     @relation(fields: [product_id], references: [id])
+  cart_items  CartItem[]
+  order_items OrderItem[]
+
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id         String  @id @default(uuid())
+  product_id String
+  url        String
+  is_primary Boolean @default(false)
+
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@map("product_images")
+}
+
+// ============================================================
+// ADDRESS
+// ============================================================
+
+model Address {
+  id           String  @id @default(uuid())
+  user_id      String
+  label        String
+  recipient    String
+  phone        String
+  province     String
+  city         String
+  district     String
+  postal_code  String
+  full_address String
+  is_default   Boolean @default(false)
+
+  user   User    @relation(fields: [user_id], references: [id])
+  orders Order[]
+
+  @@map("addresses")
+}
+
+// ============================================================
+// CART
+// ============================================================
+
+model Cart {
+  id         String   @id @default(uuid())
+  user_id    String   @unique
+  created_at DateTime @default(now())
+
+  user  User       @relation(fields: [user_id], references: [id])
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id         String @id @default(uuid())
+  cart_id    String
+  variant_id String
+  quantity   Int
+
+  cart    Cart           @relation(fields: [cart_id], references: [id])
+  variant ProductVariant @relation(fields: [variant_id], references: [id])
+
+  @@unique([cart_id, variant_id])
+  @@map("cart_items")
+}
+
+// ============================================================
+// ORDER
+// ============================================================
+
+model Order {
+  id             String      @id @default(uuid())
+  user_id        String
+  store_id       String
+  address_id     String
+  status         OrderStatus @default(PENDING)
+  subtotal       Decimal     @db.Decimal(12, 2)
+  shipping_cost  Decimal     @db.Decimal(12, 2) @default(0)
+  discount       Decimal     @db.Decimal(12, 2) @default(0)
+  total          Decimal     @db.Decimal(12, 2)
+  midtrans_token String?
+  midtrans_url   String?
+  voucher_code   String?
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  user     User        @relation(fields: [user_id], references: [id])
+  store    Store       @relation(fields: [store_id], references: [id])
+  address  Address     @relation(fields: [address_id], references: [id])
+  items    OrderItem[]
+  shipment Shipment?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  order_id   String
+  variant_id String
+  quantity   Int
+  price      Decimal @db.Decimal(12, 2)
+
+  order   Order          @relation(fields: [order_id], references: [id])
+  variant ProductVariant @relation(fields: [variant_id], references: [id])
+
+  @@map("order_items")
+}
+
+// ============================================================
+// SHIPMENT
+// ============================================================
+
+model Shipment {
+  id              String         @id @default(uuid())
+  order_id        String         @unique
+  courier         String
+  service         String
+  tracking_number String?
+  status          ShipmentStatus @default(PENDING)
+  shipped_at      DateTime?
+  updated_at      DateTime       @updatedAt
+
+  order Order @relation(fields: [order_id], references: [id])
+
+  @@map("shipments")
+}
+
+// ============================================================
+// REVIEW
+// ============================================================
+
+model Review {
+  id         String   @id @default(uuid())
+  user_id    String
+  product_id String
+  order_id   String
+  rating     Int
+  comment    String?
+  created_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@unique([user_id, product_id, order_id])
+  @@map("reviews")
+}
+
+// ============================================================
+// WISHLIST
+// ============================================================
+
+model Wishlist {
+  id         String   @id @default(uuid())
+  user_id    String
+  product_id String
+  created_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@unique([user_id, product_id])
+  @@map("wishlists")
+}
+
+// ============================================================
+// VOUCHER
+// ============================================================
+
+model Voucher {
+  id           String      @id @default(uuid())
+  store_id     String
+  code         String      @unique
+  type         VoucherType
+  value        Decimal     @db.Decimal(12, 2)
+  min_purchase Decimal     @db.Decimal(12, 2) @default(0)
+  quota        Int
+  used         Int         @default(0)
+  expired_at   DateTime
+  created_at   DateTime    @default(now())
+
+  store Store @relation(fields: [store_id], references: [id])
+
+  @@map("vouchers")
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  title      String
+  message    String
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("notifications")
+}

@@ -21,7 +21,7 @@ export default function HomePage() {
             Mulai Belanja
           </Link>
           <Link
-            href="/register"
+            href="/open-store"
             className="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
           >
             Buka Toko

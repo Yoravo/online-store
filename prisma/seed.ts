@@ -64,6 +64,20 @@ async function main() {
   })
   console.log('✓ User seller')
 
+  // Buat Admin
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@test.com' },
+    update: {},
+    create: {
+      name: 'Admin Test',
+      email: 'admin@test.com',
+      password: await bcrypt.hash('password123', 10),
+      role: 'ADMIN',
+      cart: { create: {} },
+    },
+  })
+  console.log('✓ User admin')
+
   // Buat toko test
   const store = await prisma.store.upsert({
     where: { slug: 'toko-test' },

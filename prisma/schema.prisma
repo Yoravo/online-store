@@ -5,7 +5,7 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated.prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -20,6 +20,13 @@ enum Role {
   BUYER
   SELLER
   ADMIN
+}
+
+enum StoreStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
 }
 
 enum OrderStatus {
@@ -80,6 +87,7 @@ model Store {
   user_id     String   @unique
   name        String
   slug        String   @unique
+  status      StoreStatus @default(PENDING)
   description String?
   logo        String?
   is_active   Boolean  @default(true)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Store, Check, X, Ban, Clock } from "lucide-react";
 
 interface StoreItem {
@@ -34,17 +34,18 @@ export default function AdminStoresPage() {
   const [filter, setFilter] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const fetchStores = () => {
+  // Fetch stores 
+  const fetchStores = useCallback(() => {
     const params = filter ? `?status=${filter}` : "";
     fetch(`/api/admin/stores${params}`)
       .then((res) => res.json())
       .then((data) => setStores(data.stores || []))
       .finally(() => setLoading(false));
-  };
+  }, [filter]);
 
   useEffect(() => {
     fetchStores();
-  }, [filter]);
+  }, [fetchStores]);
 
   const handleAction = async (
     id: string,

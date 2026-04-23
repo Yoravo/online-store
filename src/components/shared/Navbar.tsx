@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/src/hooks/useAuth";
-import { ShoppingCart, LogOut, LayoutDashboard, Shield } from "lucide-react";
+import { ShoppingCart, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Navbar() {

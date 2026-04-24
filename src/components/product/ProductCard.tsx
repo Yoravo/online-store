@@ -1,27 +1,27 @@
-import Link from 'next/link'
-import Image from 'next/image'
+import Link from "next/link";
+import Image from "next/image";
 
 interface Props {
   product: {
-    id: string
-    name: string
-    slug: string
-    store: { name: string; slug: string }
-    images: { url: string }[]
-    variants: { price: number }[]
-  }
+    id: string;
+    name: string;
+    slug: string;
+    store: { name: string; slug: string };
+    images: { url: string }[];
+    variants: { price: number }[];
+  };
 }
 
 export default function ProductCard({ product }: Props) {
-  const image = product.images[0]?.url || null
-  const price = product.variants[0]?.price
+  const image = product.images[0]?.url || null;
+  const price = product.variants[0]?.price;
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(price)
+    }).format(price);
 
   return (
     <Link href={`/products/${product.slug}`}>
@@ -53,5 +53,5 @@ export default function ProductCard({ product }: Props) {
         </div>
       </div>
     </Link>
-  )
+  );
 }

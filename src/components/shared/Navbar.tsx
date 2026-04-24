@@ -58,14 +58,15 @@ export default function Navbar() {
               </Link>
             )}
 
-            {user?.role === "SELLER" || user?.role === "ADMIN" ? (
+            {user?.role === "SELLER" ? (
               <Link
                 href="/dashboard"
                 className="text-sm text-gray-600 hover:text-black transition-colors"
               >
-                Dashboard
+                dashboard
               </Link>
             ) : null}
+
             {user?.role === "ADMIN" ? (
               <Link
                 href="/admin"

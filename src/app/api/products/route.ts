@@ -29,14 +29,8 @@ export async function GET(req: NextRequest) {
         include: {
           category: { select: { name: true, slug: true } },
           store: { select: { name: true, slug: true } },
-          images: {
-            where: { is_primary: true },
-            take: 1,
-          },
-          variants: {
-            orderBy: { price: "asc" },
-            take: 1,
-          },
+          images: { where: { is_primary: true }, take: 1 },
+          variants: { orderBy: { price: "asc" }, take: 1 },
         },
       }),
       prisma.product.count({ where }),

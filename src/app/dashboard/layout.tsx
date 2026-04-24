@@ -5,22 +5,23 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard,
-  Store,
-  Users,
+  Package,
+  ShoppingBag,
   Tag,
   LogOut,
   ChevronRight,
+  Store,
 } from "lucide-react";
 import { useAuth } from "@/src/hooks/useAuth";
 
 const navItems = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/stores", label: "Toko", icon: Store },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/categories", label: "Kategori", icon: Tag },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/products", label: "Produk", icon: Package },
+  { href: "/dashboard/orders", label: "Pesanan", icon: ShoppingBag },
+  { href: "/dashboard/vouchers", label: "Voucher", icon: Tag },
 ];
 
-export default function AdminLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -31,12 +32,12 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (loading) return;
-    if (!user || user.role !== "ADMIN") {
-      router.push("/")
+    if (!user || (user.role !== "SELLER" && user.role !== "ADMIN")) {
+      router.push("/");
     }
   }, [user, loading, router]);
 
-  if (loading || !user || user.role !== "ADMIN") {
+  if (loading || !user || (user.role !== "SELLER" && user.role !== "ADMIN")) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -55,7 +56,7 @@ export default function AdminLayout({
               TokoKu
             </span>
             <span className="text-[10px] font-medium bg-white/10 text-white/60 px-1.5 py-0.5 rounded-md">
-              ADMIN
+              SELLER
             </span>
           </Link>
         </div>
@@ -88,17 +89,22 @@ export default function AdminLayout({
         <div className="px-3 py-4 border-t border-white/5">
           <div className="flex items-center gap-3 px-3 py-2 mb-1">
             <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white">
-              {user?.name.charAt(0).toUpperCase()}
+              {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-white truncate">
-                {user?.name}
+                {user.name}
               </p>
-              <p className="text-[11px] text-white/40 truncate">
-                {user?.email}
-              </p>
+              <p className="text-[11px] text-white/40 truncate">{user.email}</p>
             </div>
           </div>
+          <Link
+            href="/"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <Store size={16} />
+            Lihat Toko
+          </Link>
           <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/5 transition-all"

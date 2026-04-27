@@ -1,1 +1,136 @@
 @import "tailwindcss";
+
+/* ===== COLOR SYSTEM ===== */
+:root {
+  /* Warm editorial palette */
+  --cream: 40 33% 98%;
+  --cream-dark: 36 31% 94%;
+  --ink: 30 6% 10%;
+  --ink-light: 30 4% 30%;
+  --terracotta: 15 58% 50%;
+  --terracotta-dark: 15 58% 40%;
+  --sage: 85 8% 49%;
+  --sand: 28 26% 87%;
+  --gold: 30 50% 65%;
+  
+  /* Semantic tokens */
+  --color-primary: hsl(var(--terracotta));
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(var(--sage));
+  --color-secondary-foreground: hsl(0 0% 100%);
+  --color-accent: hsl(var(--gold));
+  --color-background: hsl(var(--cream));
+  --color-foreground: hsl(var(--ink));
+  --color-muted: hsl(var(--cream-dark));
+  --color-muted-foreground: hsl(var(--ink-light));
+  --color-border: hsl(var(--sand));
+  --color-destructive: 0 84.2% 60.2%;
+}
+
+@theme inline {
+  /* Font families */
+  --font-display: var(--font-display), "Playfair Display", Georgia, serif;
+  --font-body: var(--font-body), "DM Sans", system-ui, sans-serif;
+  
+  /* Colors mapped to utilities */
+  --color-cream: hsl(var(--cream));
+  --color-cream-dark: hsl(var(--cream-dark));
+  --color-ink: hsl(var(--ink));
+  --color-ink-light: hsl(var(--ink-light));
+  --color-terracotta: hsl(var(--terracotta));
+  --color-terracotta-dark: hsl(var(--terracotta-dark));
+  --color-sage: hsl(var(--sage));
+  --color-sand: hsl(var(--sand));
+  --color-gold: hsl(var(--gold));
+  
+  /* Semantic tokens */
+  --color-background: hsl(var(--cream));
+  --color-foreground: hsl(var(--ink));
+  --color-primary: hsl(var(--terracotta));
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(var(--sage));
+  --color-secondary-foreground: hsl(0 0% 100%);
+  --color-muted: hsl(var(--cream-dark));
+  --color-muted-foreground: hsl(var(--ink-light));
+  --color-accent: hsl(var(--gold));
+  --color-accent-foreground: hsl(var(--ink));
+  --color-border: hsl(var(--sand));
+  --color-destructive: hsl(var(--color-destructive));
+  
+  /* Shadows - Neo-brutalist raised effect */
+  --shadow-card: 6px 6px 0px 0px hsl(var(--ink));
+  --shadow-card-hover: 8px 8px 0px 0px hsl(var(--terracotta));
+  --shadow-soft: 0 4px 20px hsl(0 0% 0% / 0.08);
+}
+
+/* ===== BASE STYLES ===== */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+/* ===== GRAIN TEXTURE ===== */
+.grain::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.03;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--cream-dark));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--terracotta));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--terracotta-dark));
+}
+
+/* ===== UTILITY CLASSES ===== */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  
+  .font-body {
+    font-family: var(--font-body);
+  }
+  
+  .shadow-brutal {
+    box-shadow: var(--shadow-card);
+  }
+  
+  .shadow-brutal-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}

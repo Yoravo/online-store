@@ -1,50 +1,53 @@
-// src/app/api/orders/[id]/route.ts (buat file baru)
-import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/src/lib/db'
-import { getAuthUser, unauthorizedResponse, forbiddenResponse } from '@/src/lib/api-auth'
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/src/lib/db";
+import { getAuthUser } from "@/src/lib/api-auth";
 
-const SELLER_ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  PAID: ['PROCESSING'],
-  PROCESSING: ['SHIPPED'],
-  SHIPPED: ['DELIVERED'],
-}
-
-export async function PATCH(
+export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const authUser = await getAuthUser(req)
-    if (!authUser) return unauthorizedResponse()
-    if (authUser.role !== 'SELLER') return forbiddenResponse()
+    const authUser = await getAuthUser(req);
+    if (!authUser)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const { id } = await params
-    const { status } = await req.json()
+    const { id } = await params;
 
     const order = await prisma.order.findFirst({
-      where: { id, store: { user_id: authUser.id } },
-    })
+      where: { id, user_id: authUser.id },
+      include: {
+        store: { select: { id: true, name: true, slug: true } },
+        address: true,
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: {
+                  include: {
+                    images: { where: { is_primary: true }, take: 1 },
+                  },
+                },
+              },
+            },
+          },
+        },
+        shipment: true,
+      },
+    });
 
     if (!order) {
-      return NextResponse.json({ message: 'Pesanan tidak ditemukan' }, { status: 404 })
-    }
-
-    const allowedNext = SELLER_ALLOWED_TRANSITIONS[order.status]
-    if (!allowedNext || !allowedNext.includes(status)) {
       return NextResponse.json(
-        { message: `Tidak bisa mengubah status dari ${order.status} ke ${status}` },
-        { status: 400 }
-      )
+        { message: "Order tidak ditemukan" },
+        { status: 404 },
+      );
     }
 
-    const updated = await prisma.order.update({
-      where: { id },
-      data: { status },
-    })
-
-    return NextResponse.json({ order: updated })
+    return NextResponse.json({ order });
   } catch (error) {
-    console.error('[ORDER PATCH ERROR]', error)
-    return NextResponse.json({ message: 'Terjadi kesalahan server' }, { status: 500 })
+    console.error("[ORDER DETAIL ERROR]", error);
+    return NextResponse.json(
+      { message: "Terjadi kesalahan server" },
+      { status: 500 },
+    );
   }
 }

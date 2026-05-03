@@ -236,6 +236,7 @@ model Order {
   shipping_cost  Decimal     @db.Decimal(12, 2) @default(0)
   discount       Decimal     @db.Decimal(12, 2) @default(0)
   total          Decimal     @db.Decimal(12, 2)
+  midtrans_order_id String?
   midtrans_token String?
   midtrans_url   String?
   voucher_code   String?

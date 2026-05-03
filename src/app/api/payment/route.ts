@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
       },
       item_details: itemDetails,
-    } as any);
+    } as Parameters<typeof snap.createTransaction>[0]);
 
     // Simpan midtrans token ke semua order
     for (const { order } of orders) {
@@ -152,6 +152,7 @@ export async function POST(req: NextRequest) {
         data: {
           midtrans_token: transaction.token,
           midtrans_url: transaction.redirect_url,
+          midtrans_order_id: orderId,
         },
       });
     }

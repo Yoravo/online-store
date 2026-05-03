@@ -107,7 +107,17 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-cream/40">
-          <p>© 2024 TokoKu. Crafted with ♥ in Indonesia.</p>
+          <p>
+            {" "}
+            &copy; {new Date().getFullYear()} TokoKu. Crafted by{" "}
+            <a
+              href="https://github.com/yoravo"
+              className="hover:text-cream hover:underline"
+            >
+              Radja Ravine Salfriandry
+            </a>{" "}
+            with &hearts;
+          </p>
           <div className="flex gap-6">
             <Link href="#" className="hover:text-cream transition-colors">
               Privasi

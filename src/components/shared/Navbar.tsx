@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/src/hooks/useAuth";
-import { ShoppingCart, LogOut } from "lucide-react";
+import { ShoppingCart, LogOut, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Navbar() {
@@ -83,6 +83,12 @@ export default function Navbar() {
               <div className="w-20 h-8 bg-gray-100 rounded-lg animate-pulse" />
             ) : user ? (
               <>
+                <Link
+                  href="/wishlist"
+                  className="text-gray-600 hover:text-black transition-colors"
+                >
+                  <Heart size={20} />
+                </Link>
                 <Link
                   href="/cart"
                   className="relative text-gray-600 hover:text-black transition-colors"

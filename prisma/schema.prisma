@@ -248,6 +248,7 @@ model Order {
   address  Address     @relation(fields: [address_id], references: [id])
   items    OrderItem[]
   shipment Shipment?
+  reviews  Review[]
 
   @@map("orders")
 }
@@ -299,6 +300,7 @@ model Review {
 
   user    User    @relation(fields: [user_id], references: [id])
   product Product @relation(fields: [product_id], references: [id])
+  order   Order   @relation(fields: [order_id], references: [id])
 
   @@unique([user_id, product_id, order_id])
   @@map("reviews")

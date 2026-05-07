@@ -76,7 +76,8 @@ export async function PATCH(
         { status: 404 },
       );
 
-    const { name, description, categoryId, isActive } = await req.json();
+    const { name, description, categoryId, isActive, variants } =
+      await req.json();
 
     const updated = await prisma.product.update({
       where: { id },
@@ -87,6 +88,23 @@ export async function PATCH(
         is_active: isActive,
       },
     });
+
+    // Update variants jika dikirim
+    if (variants?.length) {
+      for (const v of variants) {
+        if (v.id) {
+          await prisma.productVariant.update({
+            where: { id: v.id },
+            data: {
+              name: v.name,
+              price: v.price,
+              stock: v.stock,
+              sku: v.sku || null,
+            },
+          });
+        }
+      }
+    }
 
     return NextResponse.json({
       message: "Produk berhasil diupdate",

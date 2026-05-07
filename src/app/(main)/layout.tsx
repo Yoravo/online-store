@@ -1,12 +1,18 @@
-import Navbar from '@/src/components/shared/Navbar'
+import Navbar from "@/src/components/shared/Navbar";
+import Footer from "./sections/Footer";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <>
       <Navbar />
-      <main>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+      <Footer />
     </>
-  )
+  );
 }

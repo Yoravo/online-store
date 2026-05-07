@@ -7,26 +7,29 @@ interface Props {
     name: string;
     slug: string;
     store: { name: string; slug: string };
-    images: { url: string }[];
+    images: { url: string; is_primary?: boolean }[];
     variants: { price: number }[];
   };
 }
 
-export default function ProductCard({ product }: Props) {
-  const image = product.images[0]?.url || null;
-  const price = product.variants[0]?.price;
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(price);
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(price);
+export default function ProductCard({ product }: Props) {
+  const image =
+    product.images.find((i) => i.is_primary)?.url ||
+    product.images[0]?.url ||
+    null;
+  const price = product.variants[0]?.price;
 
   return (
     <Link href={`/products/${product.slug}`}>
-      <div className="rounded-xl border border-gray-100 overflow-hidden hover:border-gray-300 hover:shadow-sm transition-all group">
-        <div className="aspect-square bg-gray-50 relative overflow-hidden">
+      <div className="group rounded-2xl border-2 border-sand bg-cream overflow-hidden hover:border-ink hover:shadow-brutal transition-all duration-200">
+        <div className="aspect-square bg-cream-dark relative overflow-hidden">
           {image ? (
             <Image
               src={image}
@@ -35,18 +38,20 @@ export default function ProductCard({ product }: Props) {
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">
+            <div className="w-full h-full flex items-center justify-center text-sand text-xs">
               No Image
             </div>
           )}
         </div>
         <div className="p-3 space-y-1">
-          <p className="text-xs text-gray-400 truncate">{product.store.name}</p>
-          <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">
+          <p className="text-[11px] text-sage font-medium uppercase tracking-wide truncate">
+            {product.store.name}
+          </p>
+          <p className="text-sm font-semibold text-ink line-clamp-2 leading-snug group-hover:text-terracotta transition-colors">
             {product.name}
           </p>
           {price !== undefined && (
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-bold text-terracotta">
               {formatPrice(Number(price))}
             </p>
           )}

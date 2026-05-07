@@ -1,17 +1,15 @@
 // src/app/(main)/page.tsx
-import Hero from "./sections/Hero";
-// import Categories from "./sections/Categories";
+import Categories from "./sections/Categories";
 import FeaturedProducts from "./sections/FeaturedProducts";
-import Footer from "./sections/Footer";
+import HomeHero from "./sections/HomeHero";
 
 // Next.js 16: Server Component by default ✅
 export default function HomePage() {
   return (
     <>
-      <Hero />
-      {/* <Categories /> */}
+      <HomeHero />
+      <Categories />
       <FeaturedProducts />
-      <Footer />
     </>
   );
 }

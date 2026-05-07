@@ -61,7 +61,7 @@ export default function ProductDetailPage() {
         setCartMessage(data.message);
         return;
       }
-      window.dispatchEvent(new Event('cart:updated'))
+      window.dispatchEvent(new Event("cart:updated"));
       setCartMessage("Produk berhasil ditambahkan ke keranjang!");
     } catch {
       setCartMessage("Terjadi kesalahan, coba lagi");
@@ -123,7 +123,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 max-w-5xl">
       {/* Breadcrumb */}
       <Link
         href="/products"
@@ -307,7 +307,7 @@ export default function ProductDetailPage() {
           {/* Store */}
           <Link
             href={`/stores/${product.store.slug}`}
-            className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors"
+            className="flex items-center gap-3 p-4 rounded-xl border-2 border-sand hover:border-ink hover:shadow-brutal transition-all"
           >
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
               {product.store.logo ? (

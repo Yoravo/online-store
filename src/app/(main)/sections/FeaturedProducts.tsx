@@ -1,226 +1,144 @@
-"use client";
-
-import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
-import { ShoppingBag, Star, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import { ArrowUpRight, Star } from "lucide-react";
 
 interface Product {
   id: string;
   name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  storeName: string;
-  rating: number;
-  sold: number;
-  tag?: string;
+  slug: string;
+  store: { name: string; slug: string };
+  images: { url: string; is_primary: boolean }[];
+  variants: { price: number }[];
+  _count?: { reviews: number };
 }
 
-const featuredProducts: Product[] = [
-  {
-    id: "1",
-    name: "Tote Bag Kanvas Lokal",
-    price: 85000,
-    originalPrice: 120000,
-    image: "/placeholder-product.jpg",
-    storeName: "Crafted.id",
-    rating: 4.9,
-    sold: 2340,
-    tag: "Best Seller",
-  },
-  {
-    id: "2",
-    name: "Kopi Arabika Aceh Gayo",
-    price: 125000,
-    image: "/placeholder-product.jpg",
-    storeName: "Kopi Nusantara",
-    rating: 4.9,
-    sold: 1890,
-    tag: "Baru",
-  },
-  {
-    id: "3",
-    name: "Handmade Ceramic Mug",
-    price: 95000,
-    image: "/placeholder-product.jpg",
-    storeName: "Terra Studio",
-    rating: 4.8,
-    sold: 567,
-  },
-  {
-    id: "4",
-    name: "Sneakers Lokal Premium",
-    price: 450000,
-    originalPrice: 599000,
-    image: "/placeholder-product.jpg",
-    storeName: "Stride ID",
-    rating: 4.9,
-    sold: 3200,
-    tag: "Diskon",
-  },
-];
-
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("id-ID", {
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(price);
-};
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
+async function getProducts(): Promise<Product[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/products?limit=8`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.products || [];
+  } catch {
+    return [];
+  }
+}
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.22, 1, 0.36, 1] as const,
-    },
-  },
-};
+export default async function FeaturedProducts() {
+  const products = await getProducts();
 
-export default function FeaturedProducts() {
   return (
-    <section className="py-32 bg-cream-dark relative overflow-hidden">
-      {/* Background Text - Editorial touch */}
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 whitespace-nowrap pointer-events-none opacity-[0.03]">
-        <span className="font-display text-[200px] font-bold tracking-tighter">
-          PRODUK PILIHAN • PRODUK PILIHAN •
-        </span>
+    <section>
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display text-2xl font-bold text-ink">
+            Produk Terbaru
+          </h2>
+          <p className="text-sm text-ink-light mt-0.5">
+            Pilihan terbaik dari seller kami
+          </p>
+        </div>
+        <Link
+          href="/products"
+          className="inline-flex items-center gap-1 text-sm font-medium text-terracotta hover:text-terracotta-dark transition-colors group"
+        >
+          Lihat Semua
+          <ArrowUpRight
+            size={16}
+            className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+          />
+        </Link>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6"
-        >
-          <div>
-            <span className="inline-block px-3 py-1 rounded-full bg-terracotta/10 text-terracotta text-sm font-medium mb-4 border border-terracotta/20">
-              Rekomendasi
-            </span>
-            <h2 className="font-display text-4xl md:text-5xl font-bold max-w-lg text-ink">
-              Produk Populer Bulan Ini
-            </h2>
-          </div>
-          <Link href="/products">
-            <motion.span
-              whileHover={{ x: 5 }}
-              className="inline-flex items-center gap-2 text-ink font-medium hover:text-terracotta transition-colors cursor-pointer group"
-            >
-              Lihat Semua Produk
-              <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-            </motion.span>
-          </Link>
-        </motion.div>
-
-        {/* Products Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-        >
-          {featuredProducts.map((product) => (
-            <motion.div key={product.id} variants={itemVariants}>
-              <Link href={`/products/${product.id}`}>
-                <motion.div
-                  whileHover={{ y: -8 }}
-                  className="group bg-cream rounded-2xl border-2 border-ink overflow-hidden shadow-brutal hover:shadow-brutal-hover transition-all duration-300"
-                >
-                  {/* Image Container */}
-                  <div className="relative aspect-square overflow-hidden bg-sand/50">
-                    {/* Tag */}
-                    {product.tag && (
-                      <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-terracotta text-white text-xs font-bold rounded-full border border-ink shadow-brutal">
-                        {product.tag}
+      {/* Grid */}
+      {products.length === 0 ? (
+        <div className="text-center py-20 text-ink-light text-sm">
+          Belum ada produk tersedia.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {products.map((product) => {
+            const image =
+              product.images.find((i) => i.is_primary)?.url ||
+              product.images[0]?.url;
+            const price = product.variants[0]?.price;
+            return (
+              <Link key={product.id} href={`/products/${product.slug}`}>
+                <div className="group rounded-2xl border-2 border-sand bg-cream overflow-hidden hover:border-ink hover:shadow-brutal transition-all duration-200">
+                  {/* Image */}
+                  <div className="aspect-square relative bg-cream-dark overflow-hidden">
+                    {image ? (
+                      <Image
+                        src={image}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-sand text-xs">
+                        No Image
                       </div>
                     )}
-                    {/* Discount Badge */}
-                    {product.originalPrice && (
-                      <div className="absolute top-4 right-4 z-10 px-3 py-1 bg-ink text-white text-xs font-bold rounded-full border border-ink shadow-brutal">
-                        {Math.round(
-                          (1 - product.price / product.originalPrice) * 100
-                        )}
-                        % OFF
-                      </div>
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="font-display text-2xl text-ink/20 rotate-[-5deg]">
-                        Product Image
-                      </span>
-                    </div>
-                    {/* Hover Overlay with Quick Add */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      whileHover={{ opacity: 1 }}
-                      className="absolute inset-0 bg-ink/10 flex items-center justify-center"
-                    >
-                      <motion.button whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="px-6 py-3 bg-white text-ink rounded-full font-medium shadow-brutal border-2 border-ink flex items-center gap-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
-                      >
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>Tambah</span>
-                      </motion.button>
-                    </motion.div>
                   </div>
-
-                  {/* Content */}
-                  <div className="p-5">
-                    <p className="text-xs text-sage font-medium uppercase tracking-wide mb-1">
-                      {product.storeName}
+                  {/* Info */}
+                  <div className="p-3 space-y-1">
+                    <p className="text-[11px] text-sage font-medium uppercase tracking-wide truncate">
+                      {product.store.name}
                     </p>
-                    <h3 className="font-display text-lg font-semibold text-ink mb-3 line-clamp-2 group-hover:text-terracotta transition-colors">
+                    <p className="text-sm font-semibold text-ink line-clamp-2 leading-snug group-hover:text-terracotta transition-colors">
                       {product.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center gap-1">
-                        <Star
-                          className="w-4 h-4 fill-gold text-gold"
-                          strokeWidth={0}
-                        />
-                        <span className="text-sm font-medium text-ink">
-                          {product.rating}
-                        </span>
-                      </div>
-                      <span className="text-sand">•</span>
-                      <span className="text-sm text-ink-light">
-                        {product.sold} terjual
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-display text-xl font-bold text-terracotta">
-                        {formatPrice(product.price)}
-                      </span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-ink-light line-through">
-                          {formatPrice(product.originalPrice)}
-                        </span>
-                      )}
-                    </div>
+                    </p>
+                    {price !== undefined && (
+                      <p className="text-sm font-bold text-terracotta">
+                        {formatPrice(Number(price))}
+                      </p>
+                    )}
                   </div>
-                </motion.div>
+                </div>
               </Link>
-            </motion.div>
-          ))}
-        </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Second Section — Trending */}
+      <div className="mt-14 mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-bold text-ink">
+            Seller Terpercaya
+          </h2>
+          <p className="text-sm text-ink-light mt-0.5">
+            Toko dengan rating terbaik
+          </p>
+        </div>
+      </div>
+
+      {/* Promo Banner */}
+      <div className="rounded-2xl border-2 border-ink bg-terracotta/5 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-brutal">
+        <div>
+          <p className="font-display text-xl font-bold text-ink">
+            Buka Toko Sekarang
+          </p>
+          <p className="text-sm text-ink-light mt-1">
+            Gratis, mudah, dan langsung bisa jualan
+          </p>
+        </div>
+        <Link
+          href="/open-store"
+          className="px-6 py-2.5 bg-terracotta text-white rounded-xl text-sm font-medium border-2 border-ink shadow-brutal hover:bg-terracotta-dark transition-colors whitespace-nowrap"
+        >
+          Mulai Jualan →
+        </Link>
       </div>
     </section>
   );

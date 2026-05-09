@@ -26,35 +26,34 @@ export default function HomeHero() {
   };
 
   return (
-    <section className="py-10 mb-2">
-      {/* Headline */}
-      <div className="mb-6">
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-ink leading-tight">
-          Temukan apa yang kamu butuhkan
+    <section className="py-8 mb-2">
+      <div className="mb-5">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight tracking-tight">
+          Temukan apa yang <br className="hidden sm:block" />
+          kamu butuhkan
         </h1>
-        <p className="text-ink-light mt-1.5 text-sm">
+        <p className="text-gray-400 mt-2 text-sm">
           Ribuan produk dari seller terpercaya se-Indonesia
         </p>
       </div>
 
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6 max-w-2xl">
-        <div className="flex-1 relative">
-          <Search
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-light pointer-events-none"
-          />
+      <form onSubmit={handleSearch} className="flex gap-2 mb-5 max-w-2xl">
+        <div className="flex-1 flex rounded-xl overflow-hidden border border-gray-200 hover:border-brand focus-within:border-brand transition-colors bg-white">
+          <div className="flex items-center pl-4">
+            <Search size={17} className="text-gray-400 shrink-0" />
+          </div>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari produk, toko, atau kategori..."
-            className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-sand bg-cream-dark text-sm text-ink placeholder:text-ink-light/60 focus:outline-none focus:border-terracotta transition-colors"
+            className="flex-1 px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 bg-transparent focus:outline-none"
           />
         </div>
         <button
           type="submit"
-          className="px-5 py-3 bg-terracotta text-white rounded-xl text-sm font-medium hover:bg-terracotta-dark transition-colors border-2 border-ink shadow-brutal"
+          className="px-5 py-3 bg-brand hover:bg-brand-dark text-white rounded-xl text-sm font-semibold transition-colors shrink-0"
         >
           Cari
         </button>
@@ -66,11 +65,9 @@ export default function HomeHero() {
           <button
             key={cat.value}
             onClick={() =>
-              router.push(
-                cat.value ? `/products?category=${cat.value}` : "/products",
-              )
+              router.push(cat.value ? `/products?category=${cat.value}` : "/products")
             }
-            className="px-4 py-1.5 rounded-full border-2 border-sand bg-cream-dark text-sm text-ink-light font-medium hover:border-terracotta hover:text-terracotta transition-colors"
+            className="px-4 py-1.5 rounded-full border border-gray-200 bg-white text-sm text-gray-500 font-medium hover:border-brand hover:text-brand transition-colors"
           >
             {cat.label}
           </button>

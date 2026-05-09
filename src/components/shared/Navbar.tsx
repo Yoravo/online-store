@@ -348,6 +348,12 @@ export default function Navbar() {
                             </p>
                           </div>
                           <UserMenuItem
+                            href="/profile"
+                            icon={<User size={15} />}
+                            label="Profil Saya"
+                            onClick={() => setShowUserMenu(false)}
+                          />
+                          <UserMenuItem
                             href="/orders"
                             icon={<Package size={15} />}
                             label="Pesanan Saya"
@@ -557,6 +563,12 @@ export default function Navbar() {
             )}
 
             <div className="flex-1 overflow-y-auto py-2">
+              <DrawerLink
+                href="/profile"
+                icon={<User size={17} />}
+                label="Profil Saya"
+                onClick={closeMobile}
+              />
               <DrawerLink
                 href="/products"
                 icon={<Package size={17} />}

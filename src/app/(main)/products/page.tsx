@@ -5,7 +5,6 @@ import ProductFilters from "@/src/components/product/ProductFilters";
 export default function ProductsPage() {
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-gray-900">Semua Produk</h1>
         <p className="text-sm text-gray-400 mt-0.5">
@@ -13,41 +12,25 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-5">
-        {/* Sidebar Filter */}
-        <aside className="w-full md:w-52 shrink-0">
+      <div className="md:hidden">
+        <Suspense>
+          <ProductFilters />
+        </Suspense>
+      </div>
+
+      <div className="flex flex-row gap-5 items-start">
+        <aside className="hidden md:block w-52 shrink-0 sticky top-20">
           <Suspense>
             <ProductFilters />
           </Suspense>
         </aside>
 
-        {/* Product Grid */}
-        <div className="flex-1 min-w-0">
-          <Suspense fallback={<ProductListSkeleton />}>
+        <div className="flex-1 min-w-0 w-0">
+          <Suspense>
             <ProductList />
           </Suspense>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ProductListSkeleton() {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div
-          key={i}
-          className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse"
-        >
-          <div className="aspect-square bg-gray-100" />
-          <div className="p-3 space-y-2">
-            <div className="h-2.5 bg-gray-100 rounded w-1/3" />
-            <div className="h-3 bg-gray-100 rounded w-3/4" />
-            <div className="h-3.5 bg-gray-100 rounded w-1/2" />
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

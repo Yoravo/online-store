@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 
-const playfair = Playfair_Display({
+const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-body",
+  variable: "--font-display",
   display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
-const dmSans = DM_Sans({
+
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -24,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${playfair.variable} ${dmSans.variable}`}>
-      <body className="font-body antialiased bg-cream text-ink selection:bg-terracotta selection:text-white grain">
+    <html lang="id" className={`${jakartaSans.variable} ${inter.variable}`}>
+      <body className="antialiased bg-background text-text selection:bg-brand selection:text-white">
         {children}
       </body>
     </html>

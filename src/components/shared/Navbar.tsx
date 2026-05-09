@@ -13,6 +13,9 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Package,
+  Search,
+  ChevronDown,
+  User,
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
@@ -40,16 +43,18 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotif, setShowNotif] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Fetch cart
   useEffect(() => {
     const fetchCartCount = () => {
       if (user) {
         fetch("/api/cart")
-          .then((res) => res.json())
-          .then((data) => setCartCount(data.cart?.items?.length || 0));
+          .then((r) => r.json())
+          .then((d) => setCartCount(d.cart?.items?.length || 0));
       } else {
         setCartCount(0);
       }
@@ -59,35 +64,36 @@ export default function Navbar() {
     return () => window.removeEventListener("cart:updated", fetchCartCount);
   }, [user]);
 
-  // Fetch notifications
   const fetchNotifications = useCallback(() => {
     if (!user) return;
     fetch("/api/notifications")
-      .then((res) => res.json())
-      .then((data) => {
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unreadCount || 0);
+      .then((r) => r.json())
+      .then((d) => {
+        setNotifications(d.notifications || []);
+        setUnreadCount(d.unreadCount || 0);
       });
   }, [user]);
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    const iv = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(iv);
   }, [fetchNotifications]);
 
-  // Tutup notif dropdown kalau klik di luar
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node))
         setShowNotif(false);
-      }
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      )
+        setShowUserMenu(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Lock scroll saat mobile menu terbuka
   useEffect(() => {
     document.body.style.overflow = showMobileMenu ? "hidden" : "";
     return () => {
@@ -96,322 +102,526 @@ export default function Navbar() {
   }, [showMobileMenu]);
 
   const handleOpenNotif = () => {
-    setShowNotif((prev) => !prev);
+    setShowNotif((p) => !p);
+    setShowUserMenu(false);
     if (unreadCount > 0) {
       fetch("/api/notifications", { method: "PATCH" }).then(() => {
         setUnreadCount(0);
-        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+        setNotifications((p) => p.map((n) => ({ ...n, is_read: true })));
       });
     }
   };
 
-  const closeMobileMenu = () => setShowMobileMenu(false);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/products?q=${encodeURIComponent(searchQuery.trim())}`;
+    }
+  };
+
+  const closeMobile = () => setShowMobileMenu(false);
 
   return (
     <>
-      <nav className="sticky top-0 z-40 w-full border-b-2 border-sand bg-cream/90 backdrop-blur-md">
+      {/* Top bar — kategori & promo */}
+      <div className="hidden md:block bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link
-              href="/"
-              className="font-display text-xl font-bold text-ink tracking-tight"
-              onClick={closeMobileMenu}
-            >
-              TokoKu
-            </Link>
-
-            {/* Desktop Nav Links */}
-            <div className="hidden md:flex items-center gap-6">
-              <Link
-                href="/products"
-                className="text-sm text-ink-light hover:text-ink transition-colors"
-              >
-                Produk
-              </Link>
-              {user?.role === "BUYER" && (
-                <Link
-                  href="/open-store"
-                  className="text-sm text-ink-light hover:text-ink transition-colors"
-                >
-                  Buka Toko
-                </Link>
+          <div className="flex items-center justify-between h-9 text-xs">
+            <div className="flex items-center gap-4 text-gray-300">
+              <span>📦 Gratis ongkir untuk order pertama</span>
+              <span>·</span>
+              <span>🔒 Pembayaran aman & terpercaya</span>
+            </div>
+            <div className="flex items-center gap-4 text-gray-300">
+              {!user && (
+                <>
+                  <Link
+                    href="/login"
+                    className="hover:text-white transition-colors"
+                  >
+                    Masuk
+                  </Link>
+                  <span>|</span>
+                  <Link
+                    href="/register"
+                    className="hover:text-white transition-colors"
+                  >
+                    Daftar
+                  </Link>
+                </>
               )}
               {user?.role === "SELLER" && (
                 <Link
                   href="/dashboard"
-                  className="text-sm text-ink-light hover:text-ink transition-colors"
+                  className="hover:text-white transition-colors flex items-center gap-1"
                 >
-                  Dashboard
-                </Link>
-              )}
-              {user?.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className="text-sm text-ink-light hover:text-ink transition-colors"
-                >
-                  Admin
+                  <LayoutDashboard size={12} /> Dashboard Penjual
                 </Link>
               )}
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Right Side */}
-            <div className="flex items-center gap-2 sm:gap-3">
+      {/* Main Navbar */}
+      <nav
+        className="sticky top-0 z-40 w-full bg-white border-b border-gray-200"
+        style={{ boxShadow: "0 1px 3px rgb(0 0 0 / 0.08)" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 h-16">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="font-display text-xl font-bold text-brand shrink-0"
+              onClick={closeMobile}
+            >
+              TokoKu
+            </Link>
+
+            {/* Search Bar — center, desktop */}
+            <form
+              onSubmit={handleSearch}
+              className="hidden md:flex flex-1 max-w-xl"
+            >
+              <div className="flex w-full rounded-lg overflow-hidden border border-gray-200 hover:border-brand focus-within:border-brand transition-colors">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari produk, toko, atau kategori..."
+                  className="flex-1 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="px-4 bg-brand hover:bg-brand-dark transition-colors flex items-center justify-center"
+                >
+                  <Search size={18} className="text-white" />
+                </button>
+              </div>
+            </form>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-1 ml-auto md:ml-0">
               {loading ? (
-                <div className="w-16 h-8 bg-cream-dark rounded-lg animate-pulse" />
+                <div className="w-24 h-8 bg-gray-100 rounded animate-pulse" />
               ) : user ? (
                 <>
-                  {/* Wishlist — hidden di mobile (ada di mobile menu) */}
-                  <Link
+                  {/* Wishlist */}
+                  <NavIconBtn
                     href="/wishlist"
-                    className="hidden sm:block text-ink-light hover:text-ink transition-colors p-1"
+                    label="Wishlist"
+                    className="hidden sm:flex"
                   >
                     <Heart size={20} />
-                  </Link>
+                  </NavIconBtn>
 
                   {/* Cart */}
-                  <Link
-                    href="/cart"
-                    className="relative text-ink-light hover:text-ink transition-colors p-1"
-                  >
+                  <NavIconBtn href="/cart" label="Keranjang" badge={cartCount}>
                     <ShoppingCart size={20} />
-                    {cartCount > 0 && (
-                      <span className="absolute top-0 right-0 w-4 h-4 bg-terracotta text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-cream">
-                        {cartCount > 9 ? "9+" : cartCount}
-                      </span>
-                    )}
-                  </Link>
+                  </NavIconBtn>
 
-                  {/* Bell Notifikasi */}
+                  {/* Bell */}
                   <div className="relative" ref={notifRef}>
                     <button
                       onClick={handleOpenNotif}
-                      className="relative text-ink-light hover:text-ink transition-colors p-1"
+                      className="relative flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand-50 transition-colors"
                     >
-                      <Bell size={20} />
-                      {unreadCount > 0 && (
-                        <span className="absolute top-0 right-0 w-4 h-4 bg-terracotta text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-cream">
-                          {unreadCount > 9 ? "9+" : unreadCount}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* Notif Dropdown */}
-                    {showNotif && (
-                      <div className="absolute right-0 top-10 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-cream border-2 border-ink rounded-2xl shadow-brutal z-50 overflow-hidden">
-                        <div className="flex items-center justify-between px-4 py-3 border-b-2 border-sand">
-                          <span className="text-sm font-semibold text-ink">
-                            Notifikasi
+                      <div className="relative">
+                        <Bell size={20} />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                            {unreadCount > 9 ? "9+" : unreadCount}
                           </span>
-                          <button
-                            onClick={() => setShowNotif(false)}
-                            className="text-ink-light hover:text-ink transition-colors"
-                          >
-                            <X size={15} />
-                          </button>
-                        </div>
-                        <div className="max-h-72 overflow-y-auto">
-                          {notifications.length === 0 ? (
-                            <div className="py-10 text-center">
-                              <Bell
-                                size={28}
-                                className="mx-auto text-sand mb-2"
-                              />
-                              <p className="text-xs text-ink-light">
-                                Belum ada notifikasi
-                              </p>
-                            </div>
-                          ) : (
-                            notifications.map((notif) => (
-                              <div
-                                key={notif.id}
-                                className={`px-4 py-3 border-b border-sand last:border-0 ${!notif.is_read ? "bg-terracotta/5" : ""}`}
-                              >
-                                <div className="flex items-start gap-2">
-                                  {!notif.is_read && (
-                                    <span className="w-2 h-2 bg-terracotta rounded-full mt-1.5 shrink-0" />
-                                  )}
-                                  <div className={!notif.is_read ? "" : "ml-4"}>
-                                    <p className="text-xs font-semibold text-ink leading-snug">
-                                      {notif.title}
-                                    </p>
-                                    <p className="text-xs text-ink-light mt-0.5 leading-relaxed">
-                                      {notif.message}
-                                    </p>
-                                    <p className="text-[10px] text-sand mt-1">
-                                      {timeAgo(notif.created_at)}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                        {notifications.length > 0 && (
-                          <div className="px-4 py-2.5 border-t-2 border-sand">
-                            <Link
-                              href="/orders"
-                              onClick={() => setShowNotif(false)}
-                              className="text-xs text-terracotta hover:text-terracotta-dark font-medium transition-colors"
-                            >
-                              Lihat semua pesanan →
-                            </Link>
-                          </div>
                         )}
                       </div>
+                      <span className="text-[10px] font-medium hidden sm:block">
+                        Notifikasi
+                      </span>
+                    </button>
+
+                    {/* Notif Panel */}
+                    {showNotif && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowNotif(false)}
+                        />
+                        <div className="absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                            <span className="text-sm font-semibold text-gray-900">
+                              Notifikasi
+                            </span>
+                            {unreadCount === 0 && notifications.length > 0 && (
+                              <span className="text-xs text-gray-400">
+                                Semua sudah dibaca
+                              </span>
+                            )}
+                          </div>
+                          <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                            {notifications.length === 0 ? (
+                              <div className="py-10 text-center">
+                                <Bell
+                                  size={28}
+                                  className="mx-auto text-gray-200 mb-2"
+                                />
+                                <p className="text-xs text-gray-400">
+                                  Belum ada notifikasi
+                                </p>
+                              </div>
+                            ) : (
+                              notifications.map((n) => (
+                                <div
+                                  key={n.id}
+                                  className={`px-4 py-3 ${!n.is_read ? "bg-orange-50" : ""}`}
+                                >
+                                  <div className="flex gap-2">
+                                    {!n.is_read && (
+                                      <span className="w-1.5 h-1.5 bg-brand rounded-full mt-1.5 shrink-0" />
+                                    )}
+                                    <div className={!n.is_read ? "" : "ml-3.5"}>
+                                      <p className="text-xs font-semibold text-gray-900">
+                                        {n.title}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {n.message}
+                                      </p>
+                                      <p className="text-[10px] text-gray-400 mt-1">
+                                        {timeAgo(n.created_at)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                          {notifications.length > 0 && (
+                            <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
+                              <Link
+                                href="/orders"
+                                onClick={() => setShowNotif(false)}
+                                className="text-xs text-brand font-medium hover:text-brand-dark"
+                              >
+                                Lihat semua pesanan →
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
 
-                  {/* Username — desktop only */}
-                  <span className="text-sm text-ink-light hidden lg:block">
-                    Hi, {user.name.split(" ")[0]}
-                  </span>
+                  {/* User Menu — desktop */}
+                  <div className="relative hidden sm:block" ref={userMenuRef}>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu((p) => !p);
+                        setShowNotif(false);
+                      }}
+                      className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand-50 transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center">
+                        <User size={14} className="text-brand" />
+                      </div>
+                      <div className="hidden lg:flex flex-col items-start">
+                        <span className="text-[10px] text-gray-400">Halo,</span>
+                        <span className="text-xs font-semibold text-gray-800 leading-tight">
+                          {user.name.split(" ")[0]}
+                        </span>
+                      </div>
+                      <ChevronDown size={13} className="text-gray-400" />
+                    </button>
 
-                  {/* Logout — desktop only */}
-                  <button
-                    onClick={logout}
-                    className="hidden sm:flex p-2 rounded-xl border-2 border-sand text-ink-light hover:border-red-400 hover:text-red-400 transition-colors"
-                  >
-                    <LogOut size={16} />
-                  </button>
+                    {showUserMenu && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowUserMenu(false)}
+                        />
+                        <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                          <div className="px-4 py-3 border-b border-gray-100">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {user.name}
+                            </p>
+                            <p className="text-xs text-gray-400 capitalize mt-0.5">
+                              {user.role?.toLowerCase()}
+                            </p>
+                          </div>
+                          <UserMenuItem
+                            href="/orders"
+                            icon={<Package size={15} />}
+                            label="Pesanan Saya"
+                            onClick={() => setShowUserMenu(false)}
+                          />
+                          <UserMenuItem
+                            href="/wishlist"
+                            icon={<Heart size={15} />}
+                            label="Wishlist"
+                            onClick={() => setShowUserMenu(false)}
+                          />
+                          {user.role === "SELLER" && (
+                            <UserMenuItem
+                              href="/dashboard"
+                              icon={<LayoutDashboard size={15} />}
+                              label="Dashboard"
+                              onClick={() => setShowUserMenu(false)}
+                            />
+                          )}
+                          {user.role === "ADMIN" && (
+                            <UserMenuItem
+                              href="/admin"
+                              icon={<ShieldCheck size={15} />}
+                              label="Admin Panel"
+                              onClick={() => setShowUserMenu(false)}
+                            />
+                          )}
+                          {user.role === "BUYER" && (
+                            <UserMenuItem
+                              href="/open-store"
+                              icon={<Store size={15} />}
+                              label="Buka Toko"
+                              onClick={() => setShowUserMenu(false)}
+                            />
+                          )}
+                          <div className="border-t border-gray-100 mt-1 pt-1">
+                            <button
+                              onClick={() => {
+                                logout();
+                                setShowUserMenu(false);
+                              }}
+                              className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              <LogOut size={15} /> Keluar
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
 
-                  {/* Hamburger — mobile only */}
+                  {/* Hamburger — mobile */}
                   <button
                     onClick={() => setShowMobileMenu((p) => !p)}
-                    className="sm:hidden p-1.5 rounded-xl border-2 border-sand text-ink-light hover:border-ink transition-colors"
+                    className="sm:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                   >
-                    {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
+                    {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
                   </button>
                 </>
               ) : (
-                <>
+                <div className="flex items-center gap-2">
                   <Link
                     href="/login"
-                    className="text-sm text-ink-light hover:text-ink transition-colors hidden sm:block"
+                    className="hidden sm:block text-sm font-medium text-gray-600 hover:text-brand px-3 py-2 rounded-lg hover:bg-brand-50 transition-colors"
                   >
                     Masuk
                   </Link>
                   <Link
                     href="/register"
-                    className="text-sm px-4 py-2 rounded-xl bg-ink text-cream border-2 border-ink hover:bg-ink/90 transition-colors"
+                    className="text-sm font-semibold text-white bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg transition-colors"
                   >
                     Daftar
                   </Link>
-                  {/* Hamburger untuk guest di mobile */}
                   <button
                     onClick={() => setShowMobileMenu((p) => !p)}
-                    className="sm:hidden p-1.5 rounded-xl border-2 border-sand text-ink-light hover:border-ink transition-colors"
+                    className="sm:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                   >
-                    {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
+                    <Menu size={20} />
                   </button>
-                </>
+                </div>
               )}
+            </div>
+          </div>
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden pb-3">
+            <form
+              onSubmit={handleSearch}
+              className="flex rounded-lg overflow-hidden border border-gray-200 focus-within:border-brand transition-colors"
+            >
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari produk..."
+                className="flex-1 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none"
+              />
+              <button type="submit" className="px-3 bg-brand flex items-center">
+                <Search size={16} className="text-white" />
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Bottom Nav Category Bar — desktop */}
+        <div className="hidden md:block border-t border-gray-100 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-6 h-10 text-xs font-medium text-gray-500 overflow-x-auto">
+              {[
+                "Fashion",
+                "Elektronik",
+                "Makanan",
+                "Kecantikan",
+                "Rumah",
+                "Olahraga",
+                "Buku",
+                "Otomotif",
+              ].map((cat) => (
+                <Link
+                  key={cat}
+                  href={`/products?category=${cat.toLowerCase()}`}
+                  className="hover:text-brand whitespace-nowrap transition-colors"
+                >
+                  {cat}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
       </nav>
 
-      {/* ===== MOBILE MENU DRAWER ===== */}
+      {/* Mobile Notif Bottom Sheet */}
+      {showNotif && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/30 sm:hidden"
+            onClick={() => setShowNotif(false)}
+          />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl max-h-[50vh] flex flex-col sm:hidden">
+            <div className="flex justify-center pt-2.5 pb-1">
+              <div className="w-9 h-1 bg-gray-200 rounded-full" />
+            </div>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+              <span className="text-sm font-semibold">Notifikasi</span>
+              <button onClick={() => setShowNotif(false)}>
+                <X size={16} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 divide-y divide-gray-50">
+              {notifications.length === 0 ? (
+                <div className="py-10 text-center">
+                  <Bell size={28} className="mx-auto text-gray-200 mb-2" />
+                  <p className="text-xs text-gray-400">Belum ada notifikasi</p>
+                </div>
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`px-4 py-3 ${!n.is_read ? "bg-orange-50" : ""}`}
+                  >
+                    <p className="text-xs font-semibold text-gray-900">
+                      {n.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">{n.message}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      {timeAgo(n.created_at)}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Mobile Drawer */}
       {showMobileMenu && (
         <>
-          {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm sm:hidden"
-            onClick={closeMobileMenu}
+            className="fixed inset-0 z-40 bg-black/30 sm:hidden"
+            onClick={closeMobile}
           />
-
-          {/* Drawer */}
-          <div className="fixed top-0 right-0 h-full w-72 z-50 bg-cream border-l-2 border-ink shadow-brutal sm:hidden flex flex-col">
-            {/* Drawer Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b-2 border-sand">
-              <span className="font-display font-bold text-ink">Menu</span>
-              <button
-                onClick={closeMobileMenu}
-                className="text-ink-light hover:text-ink transition-colors"
-              >
-                <X size={18} />
+          <div className="fixed top-0 right-0 h-full w-72 z-50 bg-white shadow-xl sm:hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <span className="font-display font-bold text-gray-900">Menu</span>
+              <button onClick={closeMobile}>
+                <X size={18} className="text-gray-400" />
               </button>
             </div>
 
-            {/* User Info */}
             {user && (
-              <div className="px-5 py-4 border-b-2 border-sand bg-cream-dark">
-                <p className="text-xs text-ink-light">Halo,</p>
-                <p className="font-semibold text-ink">{user.name}</p>
-                <p className="text-xs text-ink-light mt-0.5">{user.role}</p>
+              <div className="px-5 py-4 bg-brand-50 border-b border-brand/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-brand/20 flex items-center justify-center">
+                    <User size={18} className="text-brand" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize">
+                      {user.role?.toLowerCase()}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Nav Items */}
-            <div className="flex-1 overflow-y-auto py-3">
-              <MobileNavLink
+            <div className="flex-1 overflow-y-auto py-2">
+              <DrawerLink
                 href="/products"
                 icon={<Package size={17} />}
-                label="Produk"
-                onClick={closeMobileMenu}
+                label="Semua Produk"
+                onClick={closeMobile}
               />
-
               {user ? (
                 <>
-                  <MobileNavLink
-                    href="/wishlist"
-                    icon={<Heart size={17} />}
-                    label="Wishlist"
-                    onClick={closeMobileMenu}
-                  />
-                  <MobileNavLink
+                  <DrawerLink
                     href="/orders"
                     icon={<ShoppingCart size={17} />}
                     label="Pesanan Saya"
-                    onClick={closeMobileMenu}
+                    onClick={closeMobile}
+                  />
+                  <DrawerLink
+                    href="/wishlist"
+                    icon={<Heart size={17} />}
+                    label="Wishlist"
+                    onClick={closeMobile}
                   />
                   {user.role === "BUYER" && (
-                    <MobileNavLink
+                    <DrawerLink
                       href="/open-store"
                       icon={<Store size={17} />}
                       label="Buka Toko"
-                      onClick={closeMobileMenu}
+                      onClick={closeMobile}
                     />
                   )}
                   {user.role === "SELLER" && (
-                    <MobileNavLink
+                    <DrawerLink
                       href="/dashboard"
                       icon={<LayoutDashboard size={17} />}
                       label="Dashboard"
-                      onClick={closeMobileMenu}
+                      onClick={closeMobile}
                     />
                   )}
                   {user.role === "ADMIN" && (
-                    <MobileNavLink
+                    <DrawerLink
                       href="/admin"
                       icon={<ShieldCheck size={17} />}
                       label="Admin Panel"
-                      onClick={closeMobileMenu}
+                      onClick={closeMobile}
                     />
                   )}
                 </>
               ) : (
-                <MobileNavLink
+                <DrawerLink
                   href="/login"
-                  icon={<LogOut size={17} />}
+                  icon={<User size={17} />}
                   label="Masuk"
-                  onClick={closeMobileMenu}
+                  onClick={closeMobile}
                 />
               )}
             </div>
 
-            {/* Logout */}
             {user && (
-              <div className="px-5 py-4 border-t-2 border-sand">
+              <div className="px-4 py-4 border-t border-gray-100">
                 <button
                   onClick={() => {
                     logout();
-                    closeMobileMenu();
+                    closeMobile();
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-sand text-red-400 hover:border-red-400 hover:bg-red-50 transition-colors text-sm font-medium"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-red-500 font-medium hover:bg-red-50 transition-colors"
                 >
-                  <LogOut size={17} />
-                  Keluar
+                  <LogOut size={16} /> Keluar
                 </button>
               </div>
             )}
@@ -422,7 +632,38 @@ export default function Navbar() {
   );
 }
 
-function MobileNavLink({
+function NavIconBtn({
+  href,
+  label,
+  badge,
+  children,
+  className = "",
+}: {
+  href: string;
+  label: string;
+  badge?: number;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`relative flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand-50 transition-colors ${className}`}
+    >
+      <div className="relative">
+        {children}
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
+      </div>
+      <span className="text-[10px] font-medium hidden sm:block">{label}</span>
+    </Link>
+  );
+}
+
+function UserMenuItem({
   href,
   icon,
   label,
@@ -437,10 +678,31 @@ function MobileNavLink({
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-ink hover:bg-cream-dark transition-colors"
+      className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand transition-colors"
     >
-      <span className="text-ink-light">{icon}</span>
-      {label}
+      <span className="text-gray-400">{icon}</span> {label}
+    </Link>
+  );
+}
+
+function DrawerLink({
+  href,
+  icon,
+  label,
+  onClick,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-brand transition-colors"
+    >
+      <span className="text-gray-400">{icon}</span> {label}
     </Link>
   );
 }

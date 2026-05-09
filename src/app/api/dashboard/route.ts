@@ -17,16 +17,32 @@ export async function GET(req: NextRequest) {
         { status: 404 },
       );
 
+    // Last 7 days range
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
     const [
       totalProducts,
       totalOrders,
       pendingOrders,
+      processingOrders,
       revenueResult,
       recentOrders,
+      weeklyOrders,
     ] = await Promise.all([
       prisma.product.count({ where: { store_id: store.id, is_active: true } }),
       prisma.order.count({ where: { store_id: store.id } }),
-      prisma.order.count({ where: { store_id: store.id, status: "PENDING" } }),
+      prisma.order.count({
+        where: {
+          store_id: store.id,
+          status: { in: ["PENDING", "WAITING_PAYMENT"] },
+        },
+      }),
+      prisma.order.count({
+        where: { store_id: store.id, status: { in: ["PAID", "PROCESSING"] } },
+      }),
       prisma.order.aggregate({
         where: {
           store_id: store.id,
@@ -37,8 +53,9 @@ export async function GET(req: NextRequest) {
       prisma.order.findMany({
         where: { store_id: store.id },
         orderBy: { created_at: "desc" },
-        take: 5,
+        take: 8,
         include: {
+          user: { select: { name: true } },
           items: {
             include: {
               variant: { include: { product: { select: { name: true } } } },
@@ -46,7 +63,30 @@ export async function GET(req: NextRequest) {
           },
         },
       }),
+      prisma.order.findMany({
+        where: {
+          store_id: store.id,
+          created_at: { gte: sevenDaysAgo },
+          status: { in: ["PAID", "SHIPPED", "DELIVERED"] },
+        },
+        select: { created_at: true, total: true },
+      }),
     ]);
+
+    // Group weekly orders by day
+    const dailyRevenue: Record<string, number> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString("id-ID", { weekday: "short" });
+      dailyRevenue[key] = 0;
+    }
+    weeklyOrders.forEach((o) => {
+      const key = new Date(o.created_at).toLocaleDateString("id-ID", {
+        weekday: "short",
+      });
+      if (key in dailyRevenue) dailyRevenue[key] += Number(o.total);
+    });
 
     return NextResponse.json({
       store,
@@ -54,9 +94,14 @@ export async function GET(req: NextRequest) {
         totalProducts,
         totalOrders,
         pendingOrders,
+        processingOrders,
         revenue: revenueResult._sum.total ?? 0,
       },
       recentOrders,
+      dailyRevenue: Object.entries(dailyRevenue).map(([day, revenue]) => ({
+        day,
+        revenue,
+      })),
     });
   } catch (error) {
     console.error("[DASHBOARD GET ERROR]", error);

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     if (!authUser)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const adresses = await prisma.address.findMany({
+    const addresses = await prisma.address.findMany({
       where: { user_id: authUser.id },
       orderBy: [{ is_default: "desc" }, { id: "asc" }],
     });

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       orderBy: [{ is_default: "desc" }, { id: "asc" }],
     });
 
-    return NextResponse.json({ adresses });
+    return NextResponse.json({ addresses });
   } catch (error) {
     console.error("[ADDRESSES GET ERROR]", error);
     return NextResponse.json(

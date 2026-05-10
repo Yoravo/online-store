@@ -76,7 +76,7 @@ export async function PATCH(
         { status: 404 },
       );
 
-    const { name, description, categoryId, isActive, variants } =
+    const { name, description, categoryId, isActive, variants, images } =
       await req.json();
 
     const updated = await prisma.product.update({
@@ -104,6 +104,18 @@ export async function PATCH(
           });
         }
       }
+    }
+
+    // update images if sent
+    if (images?.length) {
+      await prisma.productImage.deleteMany({ where: { product_id: id } });
+      await prisma.productImage.createMany({
+        data: images.map((img: { url: string; is_primary: boolean }) => ({
+          product_id: id,
+          url: img.url,
+          is_primary: img.is_primary,
+        })),
+      });
     }
 
     return NextResponse.json({

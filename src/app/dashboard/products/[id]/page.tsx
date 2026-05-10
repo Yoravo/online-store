@@ -147,6 +147,10 @@ export default function EditProductPage() {
           categoryId,
           isActive,
           variants,
+          Images: images.map((img) => ({
+            url: img.url,
+            is_primary: img.is_primary,
+          })),
         }),
       });
       if (!res.ok) {

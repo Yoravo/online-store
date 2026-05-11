@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Store, Check, X, Ban, Clock } from "lucide-react";
 
 interface StoreItem {
@@ -34,18 +34,25 @@ export default function AdminStoresPage() {
   const [filter, setFilter] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Fetch stores 
-  const fetchStores = useCallback(() => {
+  // Fetch stores
+  useEffect(() => {
+    let cancelled = false;
     const params = filter ? `?status=${filter}` : "";
     fetch(`/api/admin/stores${params}`)
-      .then((res) => res.json())
-      .then((data) => setStores(data.stores || []))
-      .finally(() => setLoading(false));
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) {
+          setStores(data.stores || []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [filter]);
-
-  useEffect(() => {
-    fetchStores();
-  }, [fetchStores]);
 
   const handleAction = async (
     id: string,
@@ -57,7 +64,7 @@ export default function AdminStoresPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
     });
-    fetchStores();
+    setFilter((f) => f);
     setActionLoading(null);
   };
 

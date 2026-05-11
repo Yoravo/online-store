@@ -2,9 +2,7 @@ import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import {
-  getAuthUser,
-  unauthorizedResponse,
-  forbiddenResponse,
+  getAuthUser, unauthorizedResponse, forbiddenResponse,
 } from "@/src/lib/api-auth";
 
 // GET - /api/products/[id]

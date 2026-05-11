@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextResponse } from 'next/server'
 import prisma from '@/src/lib/db'
 
@@ -9,7 +10,7 @@ export async function GET() {
     })
     return NextResponse.json({ categories })
   } catch (error) {
-    console.error('[CATEGORIES GET ERROR]', error)
+    logError('[CATEGORIES GET ERROR]', error)
     return NextResponse.json(
       { message: 'Terjadi kesalahan server' },
       { status: 500 }

@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ products });
   } catch (error) {
-    console.error("[DASHBOARD PRODUCTS GET ERROR]", error);
+    logError("[DASHBOARD PRODUCTS GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -61,11 +62,54 @@ export async function POST(req: NextRequest) {
     const { name, description, categoryId, isActive, variants, images } =
       await req.json();
 
-    if (!name || !categoryId || !variants?.length) {
+    if (!name || name.trim().length < 2 || name.length > 200) {
       return NextResponse.json(
-        { message: "Data tidak lengkap" },
+        { message: "Nama produk harus 2-200 karakter" },
         { status: 400 },
       );
+    }
+
+    if (!categoryId) {
+      return NextResponse.json(
+        { message: "Kategori wajib dipilih" },
+        { status: 400 },
+      );
+    }
+
+    const categoryExists = await prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+    if (!categoryExists) {
+      return NextResponse.json(
+        { message: "Kategori tidak valid" },
+        { status: 400 },
+      );
+    }
+
+    if (!variants?.length) {
+      return NextResponse.json(
+        { message: "Minimal 1 varian produk" },
+        { status: 400 },
+      );
+    }
+
+    for (const v of variants) {
+      if (typeof v.price !== "number" || v.price <= 0) {
+        return NextResponse.json(
+          { message: "Harga varian harus lebih dari 0" },
+          { status: 400 },
+        );
+      }
+      if (
+        typeof v.stock !== "number" ||
+        v.stock < 0 ||
+        !Number.isInteger(v.stock)
+      ) {
+        return NextResponse.json(
+          { message: "Stok harus bilangan bulat positif" },
+          { status: 400 },
+        );
+      }
     }
 
     const baseSlug = name
@@ -81,7 +125,7 @@ export async function POST(req: NextRequest) {
       data: {
         store_id: store.id,
         category_id: categoryId,
-        name,
+        name: name.trim(),
         slug,
         description,
         is_active: isActive ?? true,
@@ -118,7 +162,7 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("[DASHBOARD PRODUCTS POST ERROR]", error);
+    logError("[DASHBOARD PRODUCTS POST ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

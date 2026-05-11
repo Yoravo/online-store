@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ users });
   } catch (error) {
-    console.error("[ADMIN USERS GET]", error);
+    logError("[ADMIN USERS GET]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

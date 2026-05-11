@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -57,7 +58,7 @@ export async function PATCH(
 
     return NextResponse.json({ order: updated });
   } catch (error) {
-    console.error("[DASHBOARD ORDER PATCH ERROR]", error);
+    logError("[DASHBOARD ORDER PATCH ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -14,11 +15,13 @@ export async function GET(req: NextRequest) {
       take: 20,
     });
 
-    const unreadCount = notifications.filter((n) => !n.is_read).length;
+    const unreadCount = await prisma.notification.count({
+      where: { user_id: authUser.id, is_read: false },
+    });
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (error) {
-    console.error("[NOTIFICATIONS GET ERROR]", error);
+    logError("[NOTIFICATIONS GET]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -26,7 +29,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PATCH — mark all as read
 export async function PATCH(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req);
@@ -38,11 +40,9 @@ export async function PATCH(req: NextRequest) {
       data: { is_read: true },
     });
 
-    return NextResponse.json({
-      message: "Semua notifikasi ditandai sudah dibaca",
-    });
+    return NextResponse.json({ message: "Semua notifikasi ditandai dibaca" });
   } catch (error) {
-    console.error("[NOTIFICATIONS PATCH ERROR]", error);
+    logError("[NOTIFICATIONS PATCH]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

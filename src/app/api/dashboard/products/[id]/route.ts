@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -39,7 +40,7 @@ export async function GET(
 
     return NextResponse.json({ product });
   } catch (error) {
-    console.error("[DASHBOARD PRODUCT GET ERROR]", error);
+    logError("[DASHBOARD PRODUCT GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -93,8 +94,8 @@ export async function PATCH(
     if (variants?.length) {
       for (const v of variants) {
         if (v.id) {
-          await prisma.productVariant.update({
-            where: { id: v.id },
+          await prisma.productVariant.updateMany({
+            where: { id: v.id, product_id: id },
             data: {
               name: v.name,
               price: v.price,
@@ -123,7 +124,7 @@ export async function PATCH(
       product: updated,
     });
   } catch (error) {
-    console.error("[DASHBOARD PRODUCT PATCH ERROR]", error);
+    logError("[DASHBOARD PRODUCT PATCH ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -160,14 +161,14 @@ export async function DELETE(
         { status: 404 },
       );
 
-    // Hapus variant & images dulu
-    await prisma.productVariant.deleteMany({ where: { product_id: id } });
-    await prisma.productImage.deleteMany({ where: { product_id: id } });
-    await prisma.product.delete({ where: { id } });
+    await prisma.product.update({
+      where: { id },
+      data: { is_active: false },
+    });
 
     return NextResponse.json({ message: "Produk berhasil dihapus" });
   } catch (error) {
-    console.error("[DASHBOARD PRODUCT DELETE ERROR]", error);
+    logError("[DASHBOARD PRODUCT DELETE ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ categories });
   } catch (error) {
-    console.error("[ADMIN CATEGORIES GET ERROR]", error);
+    logError("[ADMIN CATEGORIES GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
         { status: 201 },
       );
     } catch (error) {
-      console.error("[ADMIN CATEGORIES POST]", error);
+      logError("[ADMIN CATEGORIES POST]", error);
       return NextResponse.json(
         { message: "Terjadi kesalahan server" },
         { status: 500 },

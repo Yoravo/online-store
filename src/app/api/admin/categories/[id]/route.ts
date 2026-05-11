@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -51,7 +52,7 @@ export async function PATCH(
       category: updated,
     });
   } catch (error) {
-    console.error("[ADMIN CATEGORY PATCH]", error);
+    logError("[ADMIN CATEGORY PATCH]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -96,7 +97,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Kategori berhasil dihapus" });
   } catch (error) {
-    console.error("[ADMIN CATEGORY DELETE]", error);
+    logError("[ADMIN CATEGORY DELETE]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

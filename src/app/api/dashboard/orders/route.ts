@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -22,6 +23,23 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const statusParam = searchParams.get("status");
+    const validStatuses = [
+      "PENDING",
+      "WAITING_PAYMENT",
+      "PAID",
+      "PROCESSING",
+      "SHIPPED",
+      "DELIVERED",
+      "CANCELLED",
+      "REFUNDED",
+    ];
+
+    if (statusParam && !validStatuses.includes(statusParam)) {
+      return NextResponse.json(
+        { message: "Status tidak valid" },
+        { status: 400 },
+      );
+    }
 
     const orders = await prisma.order.findMany({
       where: {
@@ -30,7 +48,7 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { created_at: "desc" },
       include: {
-        user: { select: { name: true, email: true } },
+        user: { select: { name: true } },
         address: {
           select: { recipient: true, city: true, province: true },
         },
@@ -81,7 +99,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ orders: formatted });
   } catch (error) {
-    console.error("[DASHBOARD ORDERS GET ERROR]", error);
+    logError("[DASHBOARD ORDERS GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

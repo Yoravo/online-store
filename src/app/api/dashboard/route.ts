@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -8,8 +9,20 @@ export async function GET(req: NextRequest) {
     if (!authUser)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+    if (authUser.role !== "SELLER" && authUser.role !== "ADMIN") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     const store = await prisma.store.findUnique({
       where: { user_id: authUser.id },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        status: true,
+        is_active: true,
+      },
     });
     if (!store)
       return NextResponse.json(
@@ -104,7 +117,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error("[DASHBOARD GET ERROR]", error);
+    logError("[DASHBOARD GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

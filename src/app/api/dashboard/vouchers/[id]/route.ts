@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -35,7 +36,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Voucher berhasil dihapus" });
   } catch (error) {
-    console.error("[DASHBOARD VOUCHER DELETE]", error);
+    logError("[DASHBOARD VOUCHER DELETE]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

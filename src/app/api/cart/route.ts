@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ cart });
   } catch (error) {
-    console.error("[CART GET ERROR]", error);
+    logError("[CART GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi Kesalahan Server" },
       { status: 500 },
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ message: "Berhasil menambahkan ke keranjang" });
   } catch (error) {
-    console.error("[CART POST ERROR]", error);
+    logError("[CART POST ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -166,7 +167,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ message: "Keranjang diperbarui" });
   } catch (error) {
-    console.error("[CART PATCH ERROR]", error);
+    logError("[CART PATCH ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -199,7 +200,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ message: "Item dihapus dari keranjang" });
   } catch (error) {
-    console.error("[CART DELETE ERROR]", error);
+    logError("[CART DELETE ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

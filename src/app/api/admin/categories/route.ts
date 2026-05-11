@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
+}
 
   export async function POST(req: NextRequest) {
     try {
@@ -71,4 +72,3 @@ export async function GET(req: NextRequest) {
       );
     }
   }
-}

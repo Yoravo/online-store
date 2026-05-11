@@ -53,8 +53,9 @@ export default function Navbar() {
     const fetchCartCount = () => {
       if (user) {
         fetch("/api/cart")
-          .then((r) => r.json())
-          .then((d) => setCartCount(d.cart?.items?.length || 0));
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => setCartCount(d?.cart?.items?.length || 0))
+          .catch(() => {});
       } else {
         setCartCount(0);
       }
@@ -67,11 +68,12 @@ export default function Navbar() {
   const fetchNotifications = useCallback(() => {
     if (!user) return;
     fetch("/api/notifications")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         setNotifications(d.notifications || []);
         setUnreadCount(d.unreadCount || 0);
-      });
+      })
+      .catch(() => {});
   }, [user]);
 
   useEffect(() => {

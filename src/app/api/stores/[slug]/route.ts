@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 
@@ -72,7 +73,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("[STORE SLUG GET ERROR]", error);
+    logError("[STORE SLUG GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -14,6 +15,24 @@ export async function POST(req: NextRequest) {
     if (!name || !slug) {
       return NextResponse.json(
         { message: "Nama dan slug wajib diisi" },
+        { status: 400 },
+      );
+    }
+
+    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!slugRegex.test(slug) || slug.length > 50) {
+      return NextResponse.json(
+        {
+          message:
+            "Slug hanya boleh huruf kecil, angka, dan strip. Maks 50 karakter.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (description && description.length > 500) {
+      return NextResponse.json(
+        { message: "Deskripsi toko maksimal 500 karakter" },
         { status: 400 },
       );
     }
@@ -78,7 +97,7 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("[STORE POST ERROR]", error);
+    logError("[STORE POST ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -99,8 +118,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ store });
   } catch (error) {
-    console.error("[STORE POST ERROR]", JSON.stringify(error, null, 2));
-    console.error("[STORE POST ERROR RAW]", error);
+    logError("[STORE POST ERROR]", JSON.stringify(error, null, 2));
+    logError("[STORE POST ERROR RAW]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

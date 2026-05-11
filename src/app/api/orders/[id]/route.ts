@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -44,7 +45,7 @@ export async function GET(
 
     return NextResponse.json({ order });
   } catch (error) {
-    console.error("[ORDER DETAIL ERROR]", error);
+    logError("[ORDER DETAIL ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

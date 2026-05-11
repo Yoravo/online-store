@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -21,6 +22,14 @@ export async function POST(req: NextRequest) {
         { message: "Rating harus antara 1-5" },
         { status: 400 },
       );
+
+    // Validasi: comment maksimal 1000 karakter
+    if (comment && comment.length > 1000) {
+      return NextResponse.json(
+        { message: "Ulasan maksimal 1000 karakter" },
+        { status: 400 },
+      );
+    }
 
     // Validasi: order harus DELIVERED dan milik user ini
     const order = await prisma.order.findFirst({
@@ -79,7 +88,7 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("[REVIEW POST ERROR]", error);
+    logError("[REVIEW POST ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

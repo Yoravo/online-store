@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -21,7 +22,7 @@ export async function GET(
 
     return NextResponse.json({ wishlisted: !!existing });
   } catch (error) {
-    console.error("[WISHLIST CHECK ERROR]", error);
+    logError("[WISHLIST CHECK ERROR]", error);
     return NextResponse.json({ wishlisted: false });
   }
 }

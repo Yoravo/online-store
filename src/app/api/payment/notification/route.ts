@@ -1,15 +1,34 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { order_id, transaction_status, fraud_status } = body;
+    const {
+      order_id,
+      status_code,
+      gross_amount,
+      signature_key,
+      transaction_status,
+      fraud_status,
+    } = body;
 
-    console.log(
-      `[WEBHOOK] order_id: ${order_id}, status: ${transaction_status}, fraud: ${fraud_status}`,
-    );
+    const serverKey = process.env.MIDTRANS_SERVER_KEY!;
+    const expected = crypto
+      .createHash("sha512")
+      .update(order_id + status_code + gross_amount + serverKey)
+      .digest("hex");
+
+    if (signature_key !== expected) {
+      console.warn(`[WEBHOOK] Invalid signature for order: ${order_id}`);
+      return NextResponse.json(
+        { message: "Invalid signature" },
+        { status: 403 },
+      );
+    }
 
     if (!order_id || !transaction_status) {
       return NextResponse.json(
@@ -36,15 +55,11 @@ export async function POST(req: NextRequest) {
 
     const orders = await prisma.order.findMany({
       where: { midtrans_order_id: order_id },
-      include: {
-        items: {
-          include: { variant: true },
-        },
-      },
+      include: { items: { include: { variant: true } } },
     });
 
     if (!orders.length) {
-      console.error(`[WEBHOOK] Order tidak ditemukan: ${order_id}`);
+      logError(`[WEBHOOK] Order tidak ditemukan: ${order_id}`);
       return NextResponse.json(
         { message: "Order tidak ditemukan" },
         { status: 404 },
@@ -60,13 +75,6 @@ export async function POST(req: NextRequest) {
       });
 
       if (orderStatus === "PAID") {
-        for (const item of order.items) {
-          await prisma.productVariant.update({
-            where: { id: item.variant_id },
-            data: { stock: { decrement: item.quantity } },
-          });
-        }
-
         await prisma.notification.create({
           data: {
             user_id: order.user_id,
@@ -111,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: "OK" });
   } catch (error) {
-    console.error("[WEBHOOK ERROR]", error);
+    logError("[WEBHOOK ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

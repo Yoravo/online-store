@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ wishlists });
   } catch (error) {
-    console.error("[WISHLIST GET ERROR]", error);
+    logError("[WISHLIST GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       message: "Ditambahkan ke wishlist",
     });
   } catch (error) {
-    console.error("[WISHLIST POST ERROR]", error);
+    logError("[WISHLIST POST ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

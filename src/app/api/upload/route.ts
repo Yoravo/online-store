@@ -1,58 +1,97 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { getAuthUser } from '@/src/lib/api-auth'
+import { logError } from "@/src/lib/logger";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { getAuthUser } from "@/src/lib/api-auth";
 
 // Pakai service_role untuk bypass RLS — aman karena ini server-side only
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+);
 
 export async function POST(req: NextRequest) {
   try {
-    const authUser = await getAuthUser(req)
-    if (!authUser) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const authUser = await getAuthUser(req);
+    if (!authUser)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const formData = await req.formData()
-    const file = formData.get('file') as File
+    if (authUser.role !== "SELLER" && authUser.role !== "ADMIN") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
 
-    if (!file) return NextResponse.json({ message: 'File tidak ditemukan' }, { status: 400 })
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!file)
+      return NextResponse.json(
+        { message: "File tidak ditemukan" },
+        { status: 400 },
+      );
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ message: 'Tipe file tidak didukung. Gunakan JPG, PNG, atau WebP' }, { status: 400 })
+      return NextResponse.json(
+        { message: "Tipe file tidak didukung. Gunakan JPG, PNG, atau WebP" },
+        { status: 400 },
+      );
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json({ message: 'Ukuran file maksimal 2MB' }, { status: 400 })
+      return NextResponse.json(
+        { message: "Ukuran file maksimal 2MB" },
+        { status: 400 },
+      );
     }
 
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    const ext = file.name.split('.').pop()
-    const fileName = `${authUser.id}-${Date.now()}.${ext}`
-    const filePath = `products/${fileName}`
+    const hex = buffer.slice(0, 4).toString("hex");
+    const isValidImage =
+      hex.startsWith("ffd8ff") || // JPEG
+      hex.startsWith("89504e47") || // PNG
+      hex.startsWith("52494646"); // RIFF (WebP)
+
+    if (!isValidImage) {
+      return NextResponse.json(
+        { message: "File bukan gambar valid" },
+        { status: 400 },
+      );
+    }
+
+    const ext = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+    }[file.type];
+    const fileName = `${authUser.id}-${Date.now()}.${ext}`;
+    const filePath = `products/${fileName}`;
 
     const { error } = await supabase.storage
-      .from('product-images')
+      .from("product-images")
       .upload(filePath, buffer, {
         contentType: file.type,
         upsert: false,
-      })
+      });
 
     if (error) {
-      console.error('[UPLOAD ERROR]', error)
-      return NextResponse.json({ message: 'Gagal upload gambar' }, { status: 500 })
+      logError("[UPLOAD ERROR]", error);
+      return NextResponse.json(
+        { message: "Gagal upload gambar" },
+        { status: 500 },
+      );
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath)
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("product-images").getPublicUrl(filePath);
 
-    return NextResponse.json({ url: publicUrl })
+    return NextResponse.json({ url: publicUrl });
   } catch (error) {
-    console.error('[UPLOAD ERROR]', error)
-    return NextResponse.json({ message: 'Terjadi kesalahan server' }, { status: 500 })
+    logError("[UPLOAD ERROR]", error);
+    return NextResponse.json(
+      { message: "Terjadi kesalahan server" },
+      { status: 500 },
+    );
   }
 }

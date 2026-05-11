@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
@@ -38,7 +39,10 @@ export async function POST(req: NextRequest) {
 
     // Ambil cart items
     const cartItems = await prisma.cartItem.findMany({
-      where: { id: { in: cartItemIds } },
+      where: {
+        id: { in: cartItemIds },
+        cart: { user_id: authUser.id },
+      },
       include: {
         variant: {
           include: {
@@ -107,6 +111,14 @@ export async function POST(req: NextRequest) {
       orders.push({ order, items });
     }
 
+    // Kurangi stok
+    for (const item of cartItems) {
+      await prisma.productVariant.update({
+        where: { id: item.variant_id },
+        data: { stock: { decrement: item.quantity } },
+      });
+    }
+
     // Total semua order
     const grandTotal = orders.reduce(
       (sum, { order }) => sum + Number(order.total),
@@ -169,7 +181,7 @@ export async function POST(req: NextRequest) {
       orders: orders.map(({ order }) => order.id),
     });
   } catch (error) {
-    console.error("[PAYMENT ERROR]", error);
+    logError("[PAYMENT ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

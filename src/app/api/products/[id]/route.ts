@@ -1,3 +1,4 @@
+import { logError } from "@/src/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import {
@@ -49,7 +50,7 @@ export async function GET(
 
     return NextResponse.json({ product, avgRating });
   } catch (error) {
-    console.error("[PRODUCT GET ERROR]", error);
+    logError("[PRODUCT GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -100,13 +101,13 @@ export async function PATCH(
     if (variants && Array.isArray(variants)) {
       for (const v of variants) {
         if (v.id) {
-          await prisma.productVariant.update({
-            where: { id: v.id },
+          await prisma.productVariant.updateMany({
+            where: { id: v.id, product_id: id },
             data: {
               name: v.name,
               price: v.price,
               stock: v.stock,
-              sku: v.sku || undefined,
+              sku: v.sku || null,
             },
           });
         }
@@ -114,7 +115,7 @@ export async function PATCH(
     }
     return NextResponse.json({ product: updated });
   } catch (error) {
-    console.error("[PRODUCT PATCH ERROR]", error);
+    logError("[PRODUCT PATCH ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },
@@ -149,7 +150,7 @@ export async function DELETE(
     });
     return NextResponse.json({ message: "Produk berhasil dihapus" });
   } catch (error) {
-    console.error("[PRODUCT DELETE ERROR]", error);
+    logError("[PRODUCT DELETE ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

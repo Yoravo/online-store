@@ -111,14 +111,6 @@ export async function POST(req: NextRequest) {
       orders.push({ order, items });
     }
 
-    // Kurangi stok
-    for (const item of cartItems) {
-      await prisma.productVariant.update({
-        where: { id: item.variant_id },
-        data: { stock: { decrement: item.quantity } },
-      });
-    }
-
     // Total semua order
     const grandTotal = orders.reduce(
       (sum, { order }) => sum + Number(order.total),

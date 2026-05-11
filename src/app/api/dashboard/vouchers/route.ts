@@ -69,6 +69,18 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
 
+    if (Number(value) <= 0 || Number(quota) <= 0)
+      return NextResponse.json(
+        { message: "Value dan quota harus lebih dari 0" },
+        { status: 400 },
+      );
+
+    if (new Date(expiredAt) <= new Date())
+      return NextResponse.json(
+        { message: "Tanggal expired harus di masa depan" },
+        { status: 400 },
+      );
+
     const exists = await prisma.voucher.findUnique({
       where: { code: code.toUpperCase() },
     });

@@ -27,48 +27,48 @@ export async function GET(req: NextRequest) {
   }
 }
 
-  export async function POST(req: NextRequest) {
-    try {
-      const authUser = await getAuthUser(req);
-      if (!authUser || authUser.role !== "ADMIN")
-        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+export async function POST(req: NextRequest) {
+  try {
+    const authUser = await getAuthUser(req);
+    if (!authUser || authUser.role !== "ADMIN")
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      const { name, parentId } = await req.json();
-      if (!name?.trim())
-        return NextResponse.json(
-          { message: "Nama kategori wajib diisi" },
-          { status: 400 },
-        );
-
-      const slug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-
-      const exists = await prisma.category.findUnique({ where: { slug } });
-      if (exists)
-        return NextResponse.json(
-          { message: "Kategori dengan nama serupa sudah ada" },
-          { status: 409 },
-        );
-
-      const category = await prisma.category.create({
-        data: {
-          name: name.trim(),
-          slug,
-          parent_id: parentId || null,
-        },
-      });
-
+    const { name, parentId } = await req.json();
+    if (!name?.trim())
       return NextResponse.json(
-        { message: "Kategori berhasil dibuat", category },
-        { status: 201 },
+        { message: "Nama kategori wajib diisi" },
+        { status: 400 },
       );
-    } catch (error) {
-      logError("[ADMIN CATEGORIES POST]", error);
+
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const exists = await prisma.category.findUnique({ where: { slug } });
+    if (exists)
       return NextResponse.json(
-        { message: "Terjadi kesalahan server" },
-        { status: 500 },
+        { message: "Kategori dengan nama serupa sudah ada" },
+        { status: 409 },
       );
-    }
+
+    const category = await prisma.category.create({
+      data: {
+        name: name.trim(),
+        slug,
+        parent_id: parentId || null,
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Kategori berhasil dibuat", category },
+      { status: 201 },
+    );
+  } catch (error) {
+    logError("[ADMIN CATEGORIES POST]", error);
+    return NextResponse.json(
+      { message: "Terjadi kesalahan server" },
+      { status: 500 },
+    );
   }
+}

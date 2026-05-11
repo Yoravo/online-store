@@ -118,8 +118,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ store });
   } catch (error) {
-    logError("[STORE POST ERROR]", JSON.stringify(error, null, 2));
-    logError("[STORE POST ERROR RAW]", error);
+    logError("[STORE GET ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 },

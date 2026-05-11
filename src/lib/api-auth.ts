@@ -1,6 +1,14 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { verifyToken, JWTPayload } from "@/src/lib/auth";
 import prisma from "@/src/lib/db";
+
+export function unauthorizedResponse() {
+  return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+}
+
+export function forbiddenResponse() {
+  return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+}
 
 export async function getAuthUser(
   req: NextRequest,

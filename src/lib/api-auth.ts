@@ -1,16 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyToken, JWTPayload } from "@/src/lib/auth";
+import prisma from "@/src/lib/db";
 
-export async function getAuthUser(req: NextRequest): Promise<JWTPayload | null> {
-  const token = req.cookies.get('token')?.value
-  if (!token) return null
-  return await verifyToken(token)
+export async function getAuthUser(
+  req: NextRequest,
+): Promise<JWTPayload | null> {
+  const token = req.cookies.get("token")?.value;
+  if (!token) return null;
+  return await verifyToken(token);
 }
 
-export function unauthorizedResponse(message = 'Unauthorized') {
-  return NextResponse.json({ message }, { status: 401 })
-}
+export async function getAuthUserFresh(req: NextRequest) {
+  const payload = await getAuthUser(req);
+  if (!payload) return null;
 
-export function forbiddenResponse(message = 'Forbidden') {
-  return NextResponse.json({ message }, { status: 403 })
+  const user = await prisma.user.findUnique({
+    where: { id: payload.id },
+    select: { id: true, email: true, role: true },
+  });
+
+  return user;
 }

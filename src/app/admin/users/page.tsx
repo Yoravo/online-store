@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Users, Search, ShieldCheck, Store, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Users, ShieldCheck, Store, User } from "lucide-react";
 
 interface UserItem {
   id: string;
@@ -29,17 +29,24 @@ export default function AdminUsersPage() {
   const [filter, setFilter] = useState("");
   const [changingRole, setChangingRole] = useState<string | null>(null);
 
-  const fetchUsers = useCallback(() => {
+  useEffect(() => {
+    let cancelled = false;
     const params = filter ? `?role=${filter}` : "";
     fetch(`/api/admin/users${params}`)
       .then((r) => r.json())
-      .then((data) => setUsers(data.users || []))
-      .finally(() => setLoading(false));
+      .then((data) => {
+        if (!cancelled) {
+          setUsers(data.users || []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [filter]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
 
   const handleRoleChange = async (id: string, role: string) => {
     setChangingRole(id);
@@ -52,10 +59,9 @@ export default function AdminUsersPage() {
       const data = await res.json();
       alert(data.message);
     }
-    fetchUsers();
+    setFilter((f) => f);
     setChangingRole(null);
   };
-
   return (
     <div className="space-y-6">
       <div>

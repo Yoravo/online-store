@@ -3,31 +3,25 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/src/lib/db";
 import { signToken } from "@/src/lib/auth";
-
-const registerAttempts = new Map<
-  string,
-  { count: number; lastAttempt: number }
->();
-const MAX_REGISTER = 3;
-const REGISTER_WINDOW = 60 * 60 * 1000; // 1 jam
+import { registerLimiter, getClientIp } from "@/src/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const now = Date.now();
-    const attempts = registerAttempts.get(ip);
-    const { name, email, password } = await req.json();
-
-    if (
-      attempts &&
-      now - attempts.lastAttempt < REGISTER_WINDOW &&
-      attempts.count >= MAX_REGISTER
-    ) {
+    const ip = getClientIp(req);
+    const { success, reset } = await registerLimiter.limit(ip);
+    if (!success) {
       return NextResponse.json(
         { message: "Terlalu banyak percobaan registrasi. Coba lagi nanti." },
-        { status: 429 },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+          },
+        },
       );
     }
+
+    const { name, email, password } = await req.json();
 
     // Validasi input
     if (!name || !email || !password) {
@@ -44,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // cek format email sederhana
+    // Cek format email sederhana
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -95,15 +89,6 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 },
     );
-
-    const current = registerAttempts.get(ip);
-    registerAttempts.set(ip, {
-      count:
-        (current && now - current.lastAttempt < REGISTER_WINDOW
-          ? current.count
-          : 0) + 1,
-      lastAttempt: now,
-    });
 
     response.cookies.set("token", token, {
       httpOnly: true,

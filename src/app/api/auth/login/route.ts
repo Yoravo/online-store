@@ -3,25 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/src/lib/db";
 import { signToken } from "@/src/lib/auth";
-
-const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
-const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 15 * 60 * 1000;
+import { loginLimiter, getClientIp } from "@/src/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const now = Date.now();
-    const attempts = loginAttempts.get(ip);
-
-    if (
-      attempts &&
-      now - attempts.lastAttempt < WINDOW_MS &&
-      attempts.count >= MAX_ATTEMPTS
-    ) {
+    const ip = getClientIp(req);
+    const { success, reset } = await loginLimiter.limit(ip);
+    if (!success) {
       return NextResponse.json(
-        { message: "Terlalu banyak percobaan. Coba lagi dalam 15 menit." },
-        { status: 429 },
+        { message: "Terlalu banyak percobaan. Coba lagi nanti." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+          },
+        },
       );
     }
 
@@ -44,21 +40,11 @@ export async function POST(req: NextRequest) {
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      const current = loginAttempts.get(ip);
-      loginAttempts.set(ip, {
-        count:
-          (current && now - current.lastAttempt < WINDOW_MS
-            ? current.count
-            : 0) + 1,
-        lastAttempt: now,
-      });
       return NextResponse.json(
         { message: "Email atau password salah" },
         { status: 401 },
       );
     }
-
-    loginAttempts.delete(ip);
 
     const token = await signToken({
       id: user.id,

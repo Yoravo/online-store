@@ -15,6 +15,12 @@ export const registerLimiter = new Ratelimit({
   prefix: "rl:register",
 });
 
+export const paymentLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "1 m"),
+  prefix: "rl:payment",
+});
+
 export function getClientIp(req: Request): string {
     const xff = req.headers.get("x-forwarded-for");
     // get first ip from client

@@ -141,6 +141,9 @@ model Product {
   reviews   Review[]
   wishlists Wishlist[]
 
+  @@index([is_active, created_at])
+  @@index([category_id])
+  @@index([store_id])
   @@map("products")
 }
 

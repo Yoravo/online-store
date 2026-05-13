@@ -13,11 +13,12 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Package,
-  Search,
   ChevronDown,
   User,
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback } from "react";
+
+import SearchAutocomplete from "@/src/components/shared/SearchAutocomplete";
 
 interface Notification {
   id: string;
@@ -45,7 +46,6 @@ export default function Navbar() {
   const [showNotif, setShowNotif] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -114,13 +114,6 @@ export default function Navbar() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/products?q=${encodeURIComponent(searchQuery.trim())}`;
-    }
-  };
-
   const closeMobile = () => setShowMobileMenu(false);
 
   return (
@@ -182,29 +175,10 @@ export default function Navbar() {
             </Link>
 
             {/* Search Bar — center, desktop */}
-            <form
-              onSubmit={handleSearch}
-              className="hidden md:flex flex-1 max-w-xl"
-            >
-              <div className="flex w-full rounded-lg overflow-hidden border border-gray-200 hover:border-brand focus-within:border-brand transition-colors">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari produk, toko, atau kategori..."
-                  className="flex-1 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="px-4 bg-brand hover:bg-brand-dark transition-colors flex items-center justify-center"
-                >
-                  <Search size={18} className="text-white" />
-                </button>
-              </div>
-            </form>
+            <SearchAutocomplete className="hidden md:flex flex-1 max-w-xl" />
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1 ml-auto md:ml-0">
+            <div className="flex items-center gap-1 ml-auto">
               {loading ? (
                 <div className="w-24 h-8 bg-gray-100 rounded animate-pulse" />
               ) : user ? (
@@ -410,6 +384,8 @@ export default function Navbar() {
                   {/* Hamburger — mobile */}
                   <button
                     onClick={() => setShowMobileMenu((p) => !p)}
+                    aria-label={showMobileMenu ? "Tutup menu" : "Buka menu"}
+                    aria-expanded={showMobileMenu}
                     className="sm:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
@@ -431,6 +407,7 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={() => setShowMobileMenu((p) => !p)}
+                    aria-label="Buka menu"
                     className="sm:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     <Menu size={20} />
@@ -442,21 +419,7 @@ export default function Navbar() {
 
           {/* Mobile Search Bar */}
           <div className="md:hidden pb-3">
-            <form
-              onSubmit={handleSearch}
-              className="flex rounded-lg overflow-hidden border border-gray-200 focus-within:border-brand transition-colors"
-            >
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari produk..."
-                className="flex-1 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none"
-              />
-              <button type="submit" className="px-3 bg-brand flex items-center">
-                <Search size={16} className="text-white" />
-              </button>
-            </form>
+            <SearchAutocomplete />
           </div>
         </div>
 
@@ -541,7 +504,7 @@ export default function Navbar() {
           <div className="fixed top-0 right-0 h-full w-72 z-50 bg-white shadow-xl sm:hidden flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <span className="font-display font-bold text-gray-900">Menu</span>
-              <button onClick={closeMobile}>
+              <button onClick={closeMobile} aria-label="Tutup menu">
                 <X size={18} className="text-gray-400" />
               </button>
             </div>

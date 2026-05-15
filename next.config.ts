@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    if (process.env.NODE_ENV !== "production") return [];
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "header", key: "x-forwarded-proto", value: "http" }],
+        destination: "https://:host/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -25,6 +36,18 @@ const nextConfig: NextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.sandbox.midtrans.com https://app.midtrans.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https://*.supabase.co",
+              "font-src 'self'",
+              "connect-src 'self' https://*.supabase.co https://api.sandbox.midtrans.com https://api.midtrans.com https://*.upstash.io",
+              "frame-src https://app.sandbox.midtrans.com https://app.midtrans.com",
+            ].join("; "),
           },
         ],
       },

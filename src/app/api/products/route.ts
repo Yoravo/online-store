@@ -25,7 +25,10 @@ export async function GET(req: NextRequest) {
       }),
     };
 
-    const orderBy = { created_at: "desc" as const };
+    const orderBy =
+      sort === "price_asc" || sort === "price_desc"
+        ? { created_at: "desc" as const }
+        : { created_at: "desc" as const };
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
@@ -45,13 +48,13 @@ export async function GET(req: NextRequest) {
 
     const sorted =
       sort === "price_asc"
-        ? products.sort(
+        ? [...products].sort(
             (a, b) =>
               Number(a.variants[0]?.price ?? 0) -
               Number(b.variants[0]?.price ?? 0),
           )
         : sort === "price_desc"
-          ? products.sort(
+          ? [...products].sort(
               (a, b) =>
                 Number(b.variants[0]?.price ?? 0) -
                 Number(a.variants[0]?.price ?? 0),

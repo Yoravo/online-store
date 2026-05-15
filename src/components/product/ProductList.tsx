@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ProductCard from '@/src/components/product/ProductCard'
-import { Search } from 'lucide-react'
 
 interface Product {
   id: string
@@ -22,24 +21,30 @@ interface Pagination {
   totalPages: number
 }
 
+const MAX_PAGE = 100;
+const MAX_LIMIT = 50;
+
 export default function ProductList() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState(searchParams.get('search') || '')
 
-  const page = searchParams.get('page') || '1'
+  const page = Math.min(Math.max(1, Number(searchParams.get('page') || '1')), MAX_PAGE)
   const category = searchParams.get('category') || ''
-  const searchQuery = searchParams.get('search') || ''
+  const sort = searchParams.get('sort') || ''
+  const q = searchParams.get('q') || ''
 
   useEffect(() => {
     const params = new URLSearchParams()
-    if (page) params.set('page', page)
+    params.set('page', String(page))
+    params.set('limit', String(Math.min(12, MAX_LIMIT)))
     if (category) params.set('category', category)
-    if (searchQuery) params.set('search', searchQuery)
+    if (sort) params.set('sort', sort)
+    if (q) params.set('q', q)
 
+    setLoading(true)
     fetch(`/api/products?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
@@ -47,39 +52,22 @@ export default function ProductList() {
         setPagination(data.pagination)
       })
       .finally(() => setLoading(false))
-  }, [page, category, searchQuery])
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const params = new URLSearchParams(searchParams.toString())
-    if (search) {
-      params.set('search', search)
-    } else {
-      params.delete('search')
-    }
-    params.delete('page')
-    router.push(`/products?${params.toString()}`)
-  }
+  }, [page, category, sort, q])
 
   const setPage = (p: number) => {
     const params = new URLSearchParams(searchParams.toString())
-    params.set('page', p.toString())
+    params.set('page', Math.min(p, MAX_PAGE).toString())
     router.push(`/products?${params.toString()}`)
   }
 
   return (
     <div className="space-y-6">
-      {/* Search */}
-      <form onSubmit={handleSearch} className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Cari produk..."
-          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-        />
-      </form>
+      {/* Active search indicator */}
+      {q && (
+        <p className="text-sm text-gray-500">
+          Hasil pencarian untuk <span className="font-medium text-gray-900">&quot;{q}&quot;</span>
+        </p>
+      )}
 
       {/* Products */}
       {loading ? (

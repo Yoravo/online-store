@@ -82,13 +82,37 @@ export async function PATCH(
     }
 
     // update product
+    const slug = name
+      ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+      : undefined;
+
+    // Check slug uniqueness
+    if (slug) {
+      const slugExists = await prisma.product.findFirst({
+        where: { slug, NOT: { id } },
+        select: { id: true },
+      });
+      if (slugExists) {
+        // Append suffix to make unique
+        const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
+        const updated = await prisma.product.update({
+          where: { id },
+          data: {
+            name,
+            slug: uniqueSlug,
+            ...(description !== undefined && { description }),
+            ...(categoryId !== undefined && { category_id: categoryId }),
+            ...(isActive !== undefined && { is_active: isActive }),
+          },
+        });
+        return NextResponse.json({ product: updated });
+      }
+    }
+
     const updated = await prisma.product.update({
       where: { id },
       data: {
-        ...(name && {
-          name,
-          slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        }),
+        ...(name && { name, slug }),
         ...(description !== undefined && { description }),
         ...(categoryId !== undefined && { category_id: categoryId }),
         ...(isActive !== undefined && { is_active: isActive }),

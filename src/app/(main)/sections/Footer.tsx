@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { FaInstagram, FaTwitter, FaFacebook } from "react-icons/fa";
 
+const SOCIALS = [
+  { Icon: FaInstagram, href: "https://instagram.com/tokoku", label: "Instagram" },
+  { Icon: FaTwitter, href: "https://twitter.com/tokoku", label: "Twitter" },
+  { Icon: FaFacebook, href: "https://facebook.com/tokoku", label: "Facebook" },
+];
+
 const LINKS = [
   {
     title: "Belanja",
@@ -20,10 +26,10 @@ const LINKS = [
   {
     title: "Bantuan",
     links: [
-      { label: "FAQ", href: "#" },
-      { label: "Kontak", href: "#" },
-      { label: "Kebijakan", href: "#" },
-      { label: "Syarat", href: "#" },
+      { label: "FAQ", href: "/products" },
+      { label: "Kontak", href: "/products" },
+      { label: "Kebijakan", href: "/products" },
+      { label: "Syarat", href: "/products" },
     ],
   },
 ];
@@ -42,13 +48,16 @@ export default function Footer() {
               terpercaya di seluruh Indonesia.
             </p>
             <div className="flex gap-3">
-              {[FaInstagram, FaTwitter, FaFacebook].map((Icon, i) => (
+              {SOCIALS.map(({ Icon, href, label }) => (
                 <a
-                  key={i}
-                  href="#"
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-brand transition-colors"
                 >
-                  <Icon size={15} />
+                  <Icon size={15} aria-hidden="true" />
                 </a>
               ))}
             </div>
@@ -110,13 +119,17 @@ export default function Footer() {
             with ♥
           </p>
           <div className="flex gap-5">
-            {["Privasi", "Syarat", "Cookies"].map((item) => (
+            {[
+              { label: "Privasi", href: "/products" },
+              { label: "Syarat", href: "/products" },
+              { label: "Cookies", href: "/products" },
+            ].map((item) => (
               <Link
-                key={item}
-                href="#"
+                key={item.label}
+                href={item.href}
                 className="hover:text-white transition-colors"
               >
-                {item}
+                {item.label}
               </Link>
             ))}
           </div>

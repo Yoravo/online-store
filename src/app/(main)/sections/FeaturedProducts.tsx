@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
+import prisma from "@/src/lib/db";
 
 interface Product {
   id: string;
@@ -20,13 +21,20 @@ const fmt = (n: number) =>
 
 async function getProducts(): Promise<Product[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/products?limit=8`, {
-      next: { revalidate: 60 },
+    const products = await prisma.product.findMany({
+      where: { is_active: true },
+      take: 8,
+      orderBy: { created_at: "desc" },
+      include: {
+        store: { select: { name: true, slug: true } },
+        images: { where: { is_primary: true }, take: 1 },
+        variants: { orderBy: { price: "asc" }, take: 1 },
+      },
     });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.products || [];
+    return products.map((p) => ({
+      ...p,
+      variants: p.variants.map((v) => ({ ...v, price: Number(v.price) })),
+    })) as unknown as Product[];
   } catch {
     return [];
   }

@@ -11,6 +11,7 @@ interface UserItem {
   avatar: string | null;
   created_at: string;
   _count: { orders: number; reviews: number };
+  store?: { name: string; status: string } | null;
 }
 
 const roleConfig = {

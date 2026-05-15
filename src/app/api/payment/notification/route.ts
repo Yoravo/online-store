@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       .digest("hex");
 
     if (signature_key !== expected) {
-      console.warn(`[WEBHOOK] Invalid signature for order: ${order_id}`);
+      logError("[WEBHOOK] Invalid signature", order_id);
       return NextResponse.json(
         { message: "Invalid signature" },
         { status: 403 },
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!orders.length) {
-      logError(`[WEBHOOK] Order tidak ditemukan: ${order_id}`);
+      logError("[WEBHOOK] Order tidak ditemukan", order_id);
       return NextResponse.json(
         { message: "Order tidak ditemukan" },
         { status: 404 },

@@ -4,10 +4,12 @@ import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/src/lib/api-auth";
 
 // Pakai service_role untuk bypass RLS — aman karena ini server-side only
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,18 +61,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ext = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-      "image/webp": "webp",
-    }[file.type];
+    const ext = "webp"; // Always convert to webp for best compression
     const fileName = `${authUser.id}-${Date.now()}.${ext}`;
     const filePath = `products/${fileName}`;
 
+    // Resize & compress with sharp
+    const sharp = (await import("sharp")).default;
+    const optimized = await sharp(buffer)
+      .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const supabase = getSupabaseAdmin();
     const { error } = await supabase.storage
       .from("product-images")
-      .upload(filePath, buffer, {
-        contentType: file.type,
+      .upload(filePath, optimized, {
+        contentType: "image/webp",
         upsert: false,
       });
 

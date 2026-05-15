@@ -255,7 +255,7 @@ export default function SearchAutocomplete({ className = "" }: { className?: str
 
           {/* Footer: search all */}
           <button
-            onClick={handleSubmit}
+            onClick={() => { setOpen(false); if (query.trim()) router.push(`/products?q=${encodeURIComponent(query.trim())}`); }}
             className="w-full px-4 py-2.5 text-xs font-medium text-brand hover:bg-brand-50 border-t border-gray-100 transition-colors text-left"
           >
             Cari semua hasil untuk &quot;{query}&quot; →

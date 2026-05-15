@@ -3,12 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/db";
 import { getAuthUser } from "@/src/lib/api-auth";
 import { snap } from "@/src/lib/midtrans";
+import { paymentLimiter } from "@/src/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
     const authUser = await getAuthUser(req);
     if (!authUser)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    const { success } = await paymentLimiter.limit(authUser.id);
+    if (!success) {
+      return NextResponse.json(
+        { message: "Terlalu banyak request. Coba lagi nanti." },
+        { status: 429 },
+      );
+    }
 
     const { addressId, cartItemIds } = await req.json();
 
@@ -80,36 +89,51 @@ export async function POST(req: NextRequest) {
       {} as Record<string, typeof cartItems>,
     );
 
-    // Buat order per toko
-    const orders = [];
-    for (const [storeId, items] of Object.entries(itemsByStore)) {
-      const subtotal = items.reduce(
-        (sum, item) => sum + Number(item.variant.price) * item.quantity,
-        0,
-      );
-      const shipping_cost = 15000; // flat rate untuk sekarang
-      const total = subtotal + shipping_cost;
+    // Buat order per toko (dalam transaction untuk race condition safety)
+    const orders = await prisma.$transaction(async (tx) => {
+      const created = [];
+      for (const [storeId, items] of Object.entries(itemsByStore)) {
+        const subtotal = items.reduce(
+          (sum, item) => sum + Number(item.variant.price) * item.quantity,
+          0,
+        );
+        const shipping_cost = 15000;
+        const total = subtotal + shipping_cost;
 
-      const order = await prisma.order.create({
-        data: {
-          user_id: authUser.id,
-          store_id: storeId,
-          address_id: addressId,
-          status: "WAITING_PAYMENT",
-          subtotal,
-          shipping_cost,
-          total,
-          items: {
-            create: items.map((item) => ({
-              variant_id: item.variant_id,
-              quantity: item.quantity,
-              price: item.variant.price,
-            })),
+        const order = await tx.order.create({
+          data: {
+            user_id: authUser.id,
+            store_id: storeId,
+            address_id: addressId,
+            status: "WAITING_PAYMENT",
+            subtotal,
+            shipping_cost,
+            total,
+            items: {
+              create: items.map((item) => ({
+                variant_id: item.variant_id,
+                quantity: item.quantity,
+                price: item.variant.price,
+              })),
+            },
           },
-        },
-      });
-      orders.push({ order, items });
-    }
+        });
+
+        // Decrement stok atomically
+        for (const item of items) {
+          const updated = await tx.productVariant.updateMany({
+            where: { id: item.variant_id, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (updated.count === 0) {
+            throw new Error(`Stok ${item.variant.product.name} habis`);
+          }
+        }
+
+        created.push({ order, items });
+      }
+      return created;
+    });
 
     // Total semua order
     const grandTotal = orders.reduce(
@@ -173,6 +197,9 @@ export async function POST(req: NextRequest) {
       orders: orders.map(({ order }) => order.id),
     });
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Stok")) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
     logError("[PAYMENT ERROR]", error);
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },

@@ -100,7 +100,7 @@ online-store/
 │ ├── generated/ # Prisma generated (jangan diedit manual)
 │ │ └── prisma/
 │ │
-│ └── middleware.ts # Auth middleware (proteksi route)
+│ └── proxy.ts    # Auth middleware / route protection (Next 16)
 │
 ├── prisma/
 │ └── schema.prisma

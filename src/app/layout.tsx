@@ -17,8 +17,38 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TokoKu - Marketplace Indonesia",
-  description: "Temukan produk lokal berkualitas dari seller terpercaya",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://tokoku.example.com",
+  ),
+  title: {
+    default: "TokoKu - Marketplace Indonesia",
+    template: "%s | TokoKu",
+  },
+  description:
+    "Temukan produk lokal berkualitas dari seller terpercaya di seluruh Indonesia.",
+  keywords: [
+    "marketplace indonesia",
+    "toko online",
+    "belanja online",
+    "produk lokal",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: "/",
+    siteName: "TokoKu",
+    title: "TokoKu - Marketplace Indonesia",
+    description:
+      "Temukan produk lokal berkualitas dari seller terpercaya di seluruh Indonesia.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TokoKu - Marketplace Indonesia",
+    description:
+      "Temukan produk lokal berkualitas dari seller terpercaya di seluruh Indonesia.",
+  },
+  robots: { index: true, follow: true },
+  alternates: { canonical: "/" },
 };
 
 export default function RootLayout({

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import prisma from "@/src/lib/db";
 import { signToken } from "@/src/lib/auth";
 import { registerLimiter, getClientIp } from "@/src/lib/rate-limit";
+import { generateOTP, sendVerificationEmail } from "@/src/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -69,11 +70,23 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Generate & send verification OTP
+    const code = generateOTP();
+    await prisma.emailVerification.create({
+      data: {
+        user_id: user.id,
+        code,
+        expires_at: new Date(Date.now() + 10 * 60_000),
+      },
+    });
+    await sendVerificationEmail(email, code);
+
     // Generate token
     const token = await signToken({
       id: user.id,
       email: user.email,
       role: user.role,
+      email_verified: false,
     });
 
     // Set cookie & return response

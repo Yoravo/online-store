@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       id: user.id,
       email: user.email,
       role: user.role,
+      email_verified: user.email_verified,
     });
 
     const response = NextResponse.json({

@@ -18,13 +18,27 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Kalau belum login, redirect ke login
+  // Kalau belum login, redirect ke login untuk protected routes
   if (!user) {
-    const isPublic = pathname === '/'
+    const PUBLIC_PREFIXES = ["/", "/products", "/stores", "/open-store"];
+    const isPublic = PUBLIC_PREFIXES.some((p) =>
+      p === "/" ? pathname === "/" : pathname.startsWith(p),
+    );
     if (!isPublic) {
-      return NextResponse.redirect(new URL('/login', req.url))
+      return NextResponse.redirect(new URL("/login", req.url));
     }
-    return NextResponse.next()
+    return NextResponse.next();
+  }
+
+  // Kalau belum verify email, redirect ke verify-email (kecuali halaman publik & verify itu sendiri)
+  if (
+    user.email_verified === false &&
+    pathname !== "/verify-email" &&
+    !pathname.startsWith("/products") &&
+    !pathname.startsWith("/stores") &&
+    pathname !== "/"
+  ) {
+    return NextResponse.redirect(new URL("/verify-email", req.url));
   }
 
   // Proteksi dashboard, hanya SELLER & ADMIN

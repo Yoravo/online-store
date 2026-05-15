@@ -58,14 +58,15 @@ enum VoucherType {
 // ============================================================
 
 model User {
-  id         String   @id @default(uuid())
-  name       String
-  email      String   @unique
-  password   String
-  role       Role     @default(BUYER)
-  avatar     String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  password       String
+  role           Role     @default(BUYER)
+  avatar         String?
+  email_verified Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
   store         Store?
   addresses     Address[]
@@ -76,6 +77,17 @@ model User {
   notifications Notification[]
 
   @@map("users")
+}
+
+model EmailVerification {
+  id         String   @id @default(uuid())
+  user_id    String
+  code       String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([user_id, code])
+  @@map("email_verifications")
 }
 
 // ============================================================

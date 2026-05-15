@@ -1,20 +1,20 @@
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@tokoku.com";
-
 export async function sendVerificationEmail(to: string, code: string) {
-  if (!RESEND_API_KEY) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+
+  if (!apiKey) {
     console.log(`[DEV] Verification code for ${to}: ${code}`);
     return;
   }
 
-  await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: FROM_EMAIL,
+      from: fromEmail,
       to,
       subject: "Verifikasi Email TokoKu",
       html: `
@@ -29,6 +29,11 @@ export async function sendVerificationEmail(to: string, code: string) {
       `,
     }),
   });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error("[EMAIL ERROR]", res.status, err);
+  }
 }
 
 export function generateOTP(): string {

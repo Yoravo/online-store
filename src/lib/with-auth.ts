@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/src/lib/api-auth";
 import { JWTPayload } from "@/src/lib/auth";
 import { verifySameOrigin } from "@/src/lib/csrf";
+import { mutationLimiter } from "@/src/lib/rate-limit";
 
 type Role = "BUYER" | "SELLER" | "ADMIN";
 
@@ -25,6 +26,18 @@ export function withAuth(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     if (allowedRoles && !allowedRoles.includes(user.role as Role))
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+
+    // Rate limit mutations
+    if (["POST", "PATCH", "PUT", "DELETE"].includes(req.method)) {
+      const { success } = await mutationLimiter.limit(user.id);
+      if (!success) {
+        return NextResponse.json(
+          { message: "Terlalu banyak request" },
+          { status: 429 },
+        );
+      }
+    }
+
     return handler(req, user, ...args);
   };
 }

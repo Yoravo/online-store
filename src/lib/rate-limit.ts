@@ -21,6 +21,12 @@ export const paymentLimiter = new Ratelimit({
   prefix: "rl:payment",
 });
 
+export const mutationLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "1 m"),
+  prefix: "rl:mutation",
+});
+
 export function getClientIp(req: Request): string {
     const xff = req.headers.get("x-forwarded-for");
     // get first ip from client

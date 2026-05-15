@@ -1,10 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is not set");
+function getJWTSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET environment variable is not set");
+  return new TextEncoder().encode(secret);
 }
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export interface JWTPayload {
   id: string;
@@ -17,12 +17,12 @@ export async function signToken(payload: JWTPayload): Promise<string> {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("1d")
-    .sign(JWT_SECRET);
+    .sign(getJWTSecret());
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJWTSecret());
     return payload as unknown as JWTPayload;
   } catch {
     return null;
